@@ -810,7 +810,6 @@ impl Library {
         Vec<Song>,
         Vec<(Option<i32>, Vec<(Option<Album>, Vec<Song>)>)>,
     )> {
-        let comp_id = artist.get_info().get_comp_id();
         let mut songs: FxHashMap<String, SongInfo> = FxHashMap::default();
 
         if fetch_by_artist_tag {
@@ -824,7 +823,7 @@ impl Library {
                 .get_song_infos_by_query(query_artist_tag, true, &mut |batch| {
                     batch
                         .into_iter()
-                        .filter(|s| s.artists.iter().any(|a| a.get_comp_id() == comp_id))
+                        .filter(|s| s.artists.iter().any(|a| a.matches(artist.get_info())))
                         .for_each(|si| {
                             songs.insert(si.uri.clone(), si);
                         });
@@ -844,7 +843,7 @@ impl Library {
                         .into_iter()
                         .filter(|s| {
                             s.album.as_ref().is_some_and(|a| {
-                                a.artists.iter().any(|a| a.get_comp_id() == comp_id)
+                                a.artists.iter().any(|a| a.matches(artist.get_info()))
                             })
                         })
                         .for_each(|si| {

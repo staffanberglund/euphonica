@@ -4,3 +4,7 @@
 target/
 build/
 src/config.rs
+build-flatpak/
+repo/
+build/
+.flatpak-builder/
