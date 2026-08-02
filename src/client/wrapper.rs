@@ -1108,7 +1108,13 @@ impl MpdWrapper {
                 tags::ALBUM,
             ]
         } else {
-            vec![tags::ARTIST, tags::ARTISTSORT, tags::ARTIST_MBID]
+            vec![
+                tags::ARTIST,
+                tags::ARTISTSORT,
+                tags::ARTIST_MBID,
+                tags::ALBUM,
+                tags::GENRE,
+            ]
         };
         let mut already_parsed: FxHashSet<String> = FxHashSet::default();
         let (s, r) = oneshot::channel();
@@ -1146,7 +1152,10 @@ impl MpdWrapper {
                 } else {
                     std::mem::take(&mut song.artists)
                 };
-                for artist in artists.into_iter() {
+                for mut artist in artists.into_iter() {
+                    if let Some(album) = song.album.as_ref() {
+                        artist.insert_genres(&album.genres);
+                    }
                     if already_parsed.insert(artist.get_comp_id().to_owned()) {
                         respond(artist.into());
                     }
