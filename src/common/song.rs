@@ -639,14 +639,34 @@ impl From<mpd::song::Song> for SongInfo {
             if !genre_tags.is_empty() {
                 album.add_genres_from_tags(&genre_tags);
             }
-            // Assume the albumartist IDs are given in the same order as the albumartist tags
+            // If AlbumArtist is absent, MPD treats Artist as its fallback in
+            // album-artist searches. Mirror that behaviour in our model and
+            // retain the parsed Artist MBIDs as well.
             if let Some(album_artist_str) = albumartist.as_ref() {
                 album.add_artists_from_string(album_artist_str);
+                album.albumartist = albumartist;
+            } else if let Some(artist_tag) = res.artist_tag.as_ref() {
+                album.albumartist = Some(artist_tag.clone());
+                album.artists = res.artists.clone();
             }
-            album.albumartist = albumartist;
+
+            // Assume the albumartist IDs are given in the same order as the albumartist tags.
             for (idx, id) in album_artist_mbids.drain(..).enumerate() {
                 if idx < album.artists.len() {
                     let _ = album.artists[idx].mbid.replace(id);
+                }
+            }
+
+            // An explicit AlbumArtist may lack its corresponding ID even when
+            // the equivalent track Artist has one. Fill that gap by exact name.
+            for album_artist in album.artists.iter_mut().filter(|a| a.mbid.is_none()) {
+                if let Some(artist_mbid) = res
+                    .artists
+                    .iter()
+                    .find(|artist| artist.name == album_artist.name)
+                    .and_then(|artist| artist.mbid.as_ref())
+                {
+                    album_artist.mbid = Some(artist_mbid.clone());
                 }
             }
         }
