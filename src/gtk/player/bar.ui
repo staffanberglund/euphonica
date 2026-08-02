@@ -207,7 +207,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="EuphonicaVolumeKnob" id="vol_knob"/>
+                      <object class="EuphonicaVolumeControl" id="vol_knob"/>
                     </child>
                   </object>
                 </property>

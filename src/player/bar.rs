@@ -18,7 +18,7 @@ use crate::{
     player::{ratio_center_box::RatioCenterBox, seekbar2::Seekbar},
 };
 
-use super::{OutputControls, PlaybackControls, PlaybackState, Player, VolumeKnob};
+use super::{OutputControls, PlaybackControls, PlaybackState, Player, VolumeControl};
 
 mod imp {
     use super::*;
@@ -61,7 +61,7 @@ mod imp {
         #[template_child]
         pub goto_pane: TemplateChild<gtk::Button>,
         #[template_child]
-        pub vol_knob: TemplateChild<VolumeKnob>,
+        pub vol_knob: TemplateChild<VolumeControl>,
 
         pub player: WeakRef<Player>,
         pub cover_changed_id: RefCell<Option<SignalHandlerId>>,
