@@ -164,6 +164,29 @@ pub enum WindowMessage {
     Stop,
 }
 
+#[derive(Clone, Debug)]
+enum NavigationTarget {
+    Root(&'static str),
+    Album(Album),
+    Artist(Artist),
+    Playlist(INode),
+    DynamicPlaylist(INode),
+}
+
+impl NavigationTarget {
+    fn key(&self) -> String {
+        match self {
+            Self::Root(view) => format!("view:{view}"),
+            Self::Album(album) => format!("album:{}", album.get_folder_uri()),
+            Self::Artist(artist) => format!("artist:{}", artist.get_name()),
+            Self::Playlist(playlist) => format!("playlist:{}", playlist.get_uri()),
+            Self::DynamicPlaylist(playlist) => {
+                format!("dynamic-playlist:{}", playlist.get_uri())
+            }
+        }
+    }
+}
+
 mod imp {
     use super::*;
 
@@ -261,6 +284,13 @@ mod imp {
         pub fft_data: OnceCell<Arc<Mutex<(Vec<f32>, Vec<f32>)>>>,
         pub accent_color: RefCell<Option<RGB>>,
         pub should_populate_visible: Cell<bool>,
+
+        // Browser-style navigation. Views keep their own page widgets, while this
+        // history records the logical page that was visited across all of them.
+        pub(super) navigation_history: RefCell<Vec<NavigationTarget>>,
+        pub(super) current_navigation_target: RefCell<Option<NavigationTarget>>,
+        pub(super) applying_navigation_target: Cell<bool>,
+        pub(super) navigate_back_action: OnceCell<gio::SimpleAction>,
 
         // Single async loop that emits "check-visible" periodically to drive
         // visibility checks for all AlbumCell instances
@@ -1299,6 +1329,9 @@ impl EuphonicaWindow {
         );
         win.imp().sidebar.setup(&win, &app);
         win.imp()
+            .current_navigation_target
+            .replace(Some(NavigationTarget::Root("recent")));
+        win.imp()
             .player_bar
             .setup(app.get_player(), app.get_cache());
 
@@ -1673,7 +1706,7 @@ impl EuphonicaWindow {
     }
 
     fn goto_pane(&self) {
-        self.imp().sidebar.set_view("queue");
+        self.navigate_to(NavigationTarget::Root("queue"), true);
         self.imp()
             .split_view
             .set_show_sidebar(!self.imp().split_view.is_collapsed());
@@ -1681,8 +1714,7 @@ impl EuphonicaWindow {
     }
 
     pub fn goto_album(&self, album: &Album) {
-        self.imp().album_view.on_album_clicked(album);
-        self.imp().sidebar.set_view("albums");
+        self.navigate_to(NavigationTarget::Album(album.clone()), true);
         if self.imp().split_view.shows_sidebar() {
             self.imp()
                 .split_view
@@ -1691,20 +1723,11 @@ impl EuphonicaWindow {
     }
 
     pub fn goto_album_from_collection(&self, album: &Album) {
-        self.imp()
-            .album_view
-            .on_album_clicked_from(album, Some("collection"));
-        self.imp().sidebar.set_view("albums");
-        if self.imp().split_view.shows_sidebar() {
-            self.imp()
-                .split_view
-                .set_show_sidebar(!self.imp().split_view.is_collapsed());
-        }
+        self.goto_album(album);
     }
 
     pub fn goto_artist(&self, artist: &Artist) {
-        self.imp().artist_view.on_artist_clicked(artist);
-        self.imp().sidebar.set_view("artists");
+        self.navigate_to(NavigationTarget::Artist(artist.clone()), true);
         if self.imp().split_view.shows_sidebar() {
             self.imp()
                 .split_view
@@ -1713,8 +1736,16 @@ impl EuphonicaWindow {
     }
 
     pub fn goto_playlist(&self, playlist: &INode) {
-        self.imp().playlist_view.on_playlist_clicked(playlist);
-        self.imp().sidebar.set_view("playlists");
+        self.navigate_to(NavigationTarget::Playlist(playlist.clone()), true);
+        if self.imp().split_view.shows_sidebar() {
+            self.imp()
+                .split_view
+                .set_show_sidebar(!self.imp().split_view.is_collapsed());
+        }
+    }
+
+    pub fn goto_dynamic_playlist(&self, playlist: &INode) {
+        self.navigate_to(NavigationTarget::DynamicPlaylist(playlist.clone()), true);
         if self.imp().split_view.shows_sidebar() {
             self.imp()
                 .split_view
@@ -1813,12 +1844,142 @@ impl EuphonicaWindow {
     }
 
     pub(crate) fn switch_to_view(&self, view_name: &str) {
-        self.imp().sidebar.get().set_view(view_name);
+        let Some(view_name) = Self::root_view_name(view_name) else {
+            eprintln!("Unknown view: {view_name}");
+            return;
+        };
+        self.navigate_to(NavigationTarget::Root(view_name), true);
+    }
+
+    pub(crate) fn replace_current_view(&self, view_name: &str) {
+        let Some(view_name) = Self::root_view_name(view_name) else {
+            eprintln!("Unknown view: {view_name}");
+            return;
+        };
+        self.navigate_to(NavigationTarget::Root(view_name), false);
+    }
+
+    fn root_view_name(view_name: &str) -> Option<&'static str> {
+        match view_name {
+            "recent" => Some("recent"),
+            "collection" => Some("collection"),
+            "albums" => Some("albums"),
+            "artists" => Some("artists"),
+            "folders" => Some("folders"),
+            "dynamic_playlists" => Some("dynamic_playlists"),
+            "playlists" => Some("playlists"),
+            "queue" => Some("queue"),
+            _ => None,
+        }
+    }
+
+    fn navigate_to(&self, target: NavigationTarget, add_to_history: bool) {
+        if self.imp().applying_navigation_target.get() {
+            return;
+        }
+
+        let target_key = target.key();
+        if self
+            .imp()
+            .current_navigation_target
+            .borrow()
+            .as_ref()
+            .is_some_and(|current| current.key() == target_key)
+        {
+            return;
+        }
+
+        if add_to_history
+            && let Some(current) = self.imp().current_navigation_target.borrow().clone()
+        {
+            let mut history = self.imp().navigation_history.borrow_mut();
+            if history.last().is_none_or(|previous| previous.key() != current.key()) {
+                history.push(current);
+                // Keep accidental, very long-running sessions bounded.
+                if history.len() > 100 {
+                    history.remove(0);
+                }
+            }
+        }
+
+        self.imp().applying_navigation_target.set(true);
+        match &target {
+            NavigationTarget::Root(view) => {
+                match *view {
+                    "albums" => self.imp().album_view.show_list(),
+                    "artists" => self.imp().artist_view.show_list(),
+                    "playlists" => self.imp().playlist_view.show_list(),
+                    "dynamic_playlists" => self.imp().dyn_playlist_view.show_list(),
+                    _ => {}
+                }
+                self.imp().sidebar.set_view(view);
+                self.imp().stack.set_visible_child_name(view);
+            }
+            NavigationTarget::Album(album) => {
+                self.imp().album_view.on_album_clicked(album);
+                self.imp().sidebar.set_view("albums");
+                self.imp().stack.set_visible_child_name("albums");
+            }
+            NavigationTarget::Artist(artist) => {
+                self.imp().artist_view.on_artist_clicked(artist);
+                self.imp().sidebar.set_view("artists");
+                self.imp().stack.set_visible_child_name("artists");
+            }
+            NavigationTarget::Playlist(playlist) => {
+                self.imp().playlist_view.on_playlist_clicked(playlist);
+                self.imp().sidebar.set_view("playlists");
+                self.imp().stack.set_visible_child_name("playlists");
+            }
+            NavigationTarget::DynamicPlaylist(playlist) => {
+                self.imp().dyn_playlist_view.on_playlist_clicked(playlist);
+                self.imp().sidebar.set_view("dynamic_playlists");
+                self.imp().stack.set_visible_child_name("dynamic_playlists");
+            }
+        }
+        self.imp().applying_navigation_target.set(false);
+        self.imp().current_navigation_target.replace(Some(target));
+        self.update_navigate_back_action();
+    }
+
+    fn navigate_back(&self) {
+        if self.is_in_playlist_editor() {
+            self.imp().playlist_view.content_view().exit_edit_mode(false);
+            return;
+        }
+        if let Some(editor) = self.maybe_get_dyn_playlist_editor() {
+            editor.request_exit();
+            return;
+        }
+
+        let target = self.imp().navigation_history.borrow_mut().pop();
+        if let Some(target) = target {
+            self.navigate_to(target, false);
+        }
+        self.update_navigate_back_action();
+    }
+
+    fn update_navigate_back_action(&self) {
+        if let Some(action) = self.imp().navigate_back_action.get() {
+            action.set_enabled(!self.imp().navigation_history.borrow().is_empty());
+        }
     }
 
     /// These are view-related actions. In the rather unlikely case that we decide to allow multiple Euphonica windows
     /// (not sure if there's even a need for that) these will only go off on the focused window.
     fn setup_gactions(&self) {
+        let navigate_back_action = gio::SimpleAction::new("navigate-back", None);
+        navigate_back_action.set_enabled(false);
+        navigate_back_action.connect_activate(clone!(
+            #[weak(rename_to = this)]
+            self,
+            move |_, _| this.navigate_back()
+        ));
+        self.add_action(&navigate_back_action);
+        self.imp()
+            .navigate_back_action
+            .set(navigate_back_action)
+            .expect("Cannot set up navigation action twice");
+
         let view_recent_action = gio::ActionEntry::builder("view-recent")
             .activate(move |this: &Self, _, _| this.switch_to_view("recent"))
             .build();

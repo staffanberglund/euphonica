@@ -6,7 +6,7 @@ use gtk::{
     glib::{self},
     glib::{Properties, SignalHandlerId, WeakRef, clone, subclass::Signal},
 };
-use std::cell::{OnceCell, RefCell};
+use std::cell::RefCell;
 use std::{cell::Cell, cmp::Ordering, rc::Rc, sync::OnceLock};
 
 use super::{AlbumCell, AlbumContentView, Library, TagsFilter};
@@ -82,8 +82,6 @@ mod imp {
         pub collapsed: Cell<bool>,
 
         pub initializing: Cell<bool>,
-        pub window: OnceCell<WeakRef<EuphonicaWindow>>,
-        pub return_view: RefCell<Option<String>>,
     }
 
     #[glib::object_subclass]
@@ -118,6 +116,7 @@ mod imp {
 
         fn constructed(&self) {
             self.parent_constructed();
+            self.nav_view.action_set_enabled("navigation.pop", false);
             self.stack.show_placeholder();
 
             self.obj()
@@ -453,13 +452,6 @@ impl AlbumView {
         window: &EuphonicaWindow,
     ) {
         self.imp().library.set(Some(library));
-        let weak = WeakRef::new();
-        weak.set(Some(window));
-
-        self.imp()
-            .window
-            .set(weak)
-            .expect("AlbumView window already set");
         self.setup_gridview(cache.clone(), window);
 
         // Set up genres and tags filters
@@ -516,17 +508,6 @@ impl AlbumView {
 
         let content_view = self.imp().content_view.get();
         content_view.setup(library, client_state, cache, window);
-        self.imp().content_page.connect_hiding(clone!(
-            #[weak(rename_to = this)]
-            self,
-            #[weak]
-            window,
-            move |_| {
-                if let Some(return_view) = this.imp().return_view.take() {
-                    window.switch_to_view(&return_view);
-                }
-            }
-        ));
         self.imp().content_page.connect_hidden(move |_| {
             content_view.unbind();
         });
@@ -537,17 +518,10 @@ impl AlbumView {
     }
 
     pub fn on_album_clicked(&self, album: &Album) {
-        self.on_album_clicked_from(album, None);
-    }
-
-    pub fn on_album_clicked_from(&self, album: &Album, return_view: Option<&str>) {
         // - Upon receiving click signal, get the list item at the indicated activate index.
         // - Extract album from that list item.
         // - Bind AlbumContentView to that album. The content view should then populate itself.
         let content_view = self.imp().content_view.get();
-        self.imp()
-            .return_view
-            .replace(return_view.map(str::to_owned));
         content_view.unbind();
         content_view.bind(album);
         if self
@@ -558,6 +532,10 @@ impl AlbumView {
         {
             self.imp().nav_view.push_by_tag("content");
         }
+    }
+
+    pub fn show_list(&self) {
+        self.imp().nav_view.pop_to_tag("list");
     }
 
     fn setup_gridview(&self, cache: Rc<Cache>, window: &EuphonicaWindow) {
@@ -662,15 +640,15 @@ impl AlbumView {
 
         // Setup click action
         self.imp().grid_view.connect_activate(clone!(
-            #[weak(rename_to = this)]
-            self,
+            #[weak]
+            window,
             move |grid_view, position| {
                 let model = grid_view.model().expect("The model has to exist.");
                 let album = model
                     .item(position)
                     .and_downcast::<Album>()
                     .expect("The item has to be a `common::Album`.");
-                this.on_album_clicked(&album);
+                window.goto_album(&album);
             }
         ));
     }
