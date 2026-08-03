@@ -129,45 +129,44 @@ impl Sidebar {
         // Hook each button to their respective views
         recent_btn.connect_toggled(clone!(
             #[weak]
-            stack,
+            win,
             move |btn| {
                 if btn.is_active() {
-                    stack.set_visible_child_name("recent");
+                    win.switch_to_view("recent");
                 }
             }
         ));
 
         self.imp().albums_btn.connect_toggled(clone!(
             #[weak]
-            stack,
+            win,
             move |btn| {
                 if btn.is_active() {
-                    stack.set_visible_child_name("albums");
+                    win.switch_to_view("albums");
                 }
             }
         ));
 
         self.imp().artists_btn.connect_toggled(clone!(
             #[weak]
-            stack,
+            win,
             move |btn| {
                 if btn.is_active() {
-                    stack.set_visible_child_name("artists");
+                    win.switch_to_view("artists");
                 }
             }
         ));
 
         self.imp().folders_btn.connect_toggled(clone!(
             #[weak]
-            stack,
+            win,
             move |btn| {
                 if btn.is_active() {
-                    stack.set_visible_child_name("folders");
+                    win.switch_to_view("folders");
                 }
             }
         ));
 
-        let playlist_view = win.get_playlist_view();
         let playlists = library.playlists();
         let recent_playlists_model = gtk::SliceListModel::new(
             Some(gtk::SortListModel::new(
@@ -191,18 +190,10 @@ impl Sidebar {
 
         self.imp().playlists_btn.connect_toggled(clone!(
             #[weak]
-            stack,
-            #[weak]
-            playlist_view,
+            win,
             move |btn| {
                 if btn.is_active() {
-                    playlist_view.pop();
-                    if stack
-                        .visible_child_name()
-                        .is_none_or(|name| name.as_str() != "playlists")
-                    {
-                        stack.set_visible_child_name("playlists");
-                    }
+                    win.switch_to_view("playlists");
                 }
             }
         ));
@@ -212,9 +203,7 @@ impl Sidebar {
             Some(&recent_playlists_model),
             clone!(
                 #[weak]
-                stack,
-                #[weak]
-                playlist_view,
+                win,
                 #[weak]
                 split_view,
                 #[weak]
@@ -227,22 +216,14 @@ impl Sidebar {
                     btn.set_group(Some(&recent_btn));
                     btn.connect_toggled(clone!(
                         #[weak]
-                        stack,
-                        #[weak]
-                        playlist_view,
+                        win,
                         #[weak]
                         split_view,
                         #[weak]
                         playlist,
                         move |btn| {
                             if btn.is_active() {
-                                playlist_view.on_playlist_clicked(&playlist);
-                                if stack
-                                    .visible_child_name()
-                                    .is_none_or(|name| name.as_str() != "playlists")
-                                {
-                                    stack.set_visible_child_name("playlists");
-                                }
+                                win.goto_playlist(&playlist);
                                 split_view.set_show_sidebar(!split_view.is_collapsed());
                             }
                         }
@@ -252,7 +233,6 @@ impl Sidebar {
             ),
         );
 
-        let dyn_playlist_view = win.get_dyn_playlist_view();
         let dyn_playlists = library.dyn_playlists();
         let recent_dyn_playlists_model = gtk::SliceListModel::new(
             Some(gtk::SortListModel::new(
@@ -280,13 +260,10 @@ impl Sidebar {
 
         self.imp().dyn_playlists_btn.connect_toggled(clone!(
             #[weak]
-            stack,
-            #[weak]
-            dyn_playlist_view,
+            win,
             move |btn| {
                 if btn.is_active() {
-                    dyn_playlist_view.pop();
-                    stack.set_visible_child_name("dynamic_playlists");
+                    win.switch_to_view("dynamic_playlists");
                 }
             }
         ));
@@ -296,9 +273,7 @@ impl Sidebar {
             Some(&recent_dyn_playlists_model),
             clone!(
                 #[weak]
-                stack,
-                #[weak]
-                dyn_playlist_view,
+                win,
                 #[weak]
                 split_view,
                 #[weak]
@@ -311,22 +286,14 @@ impl Sidebar {
                     btn.set_group(Some(&recent_btn));
                     btn.connect_toggled(clone!(
                         #[weak]
-                        stack,
-                        #[weak]
-                        dyn_playlist_view,
+                        win,
                         #[weak]
                         split_view,
                         #[weak]
                         playlist,
                         move |btn| {
                             if btn.is_active() {
-                                dyn_playlist_view.on_playlist_clicked(&playlist);
-                                if stack
-                                    .visible_child_name()
-                                    .is_none_or(|name| name.as_str() != "dynamic_playlists")
-                                {
-                                    stack.set_visible_child_name("dynamic_playlists");
-                                }
+                                win.goto_dynamic_playlist(&playlist);
                                 split_view.set_show_sidebar(!split_view.is_collapsed());
                             }
                         }
@@ -387,10 +354,10 @@ impl Sidebar {
 
         self.imp().queue_btn.connect_toggled(clone!(
             #[weak]
-            stack,
+            win,
             move |btn| {
                 if btn.is_active() {
-                    stack.set_visible_child_name("queue");
+                    win.switch_to_view("queue");
                 }
             }
         ));
