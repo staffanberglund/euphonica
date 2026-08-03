@@ -21,6 +21,13 @@
 							<object class="GtkSeparator"></object>
 						</child>
 						<child>
+							<object class="EuphonicaSidebarButton" id="collection_btn">
+								<property name="group">recent_btn</property>
+								<property name="label" translatable="true">Collection</property>
+								<property name="icon_name">library-symbolic</property>
+							</object>
+						</child>
+						<child>
 							<object class="EuphonicaSidebarButton" id="albums_btn">
 								<property name="group">recent_btn</property>
 								<property name="label" translatable="true">Albums</property>

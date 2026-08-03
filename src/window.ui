@@ -19,6 +19,7 @@
         <condition>max-width: 530</condition>
         <setter object="split_view" property="collapsed">true</setter>
         <setter object="recent_view" property="collapsed">true</setter>
+        <setter object="collection_view" property="collapsed">true</setter>
         <setter object="album_view" property="collapsed">true</setter>
         <setter object="artist_view" property="collapsed">true</setter>
         <setter object="folder_view" property="collapsed">true</setter>
@@ -219,6 +220,16 @@
                       <object class="GtkStack" id="stack">
                         <property name="transition-duration">200</property>
                         <property name="transition-type">7</property>
+                        <child>
+                          <object class="GtkStackPage">
+                            <property name="title" translatable="true">Collection</property>
+                            <property name="name">collection</property>
+                            <property name="child">
+                              <object class="EuphonicaCollectionView" id="collection_view">
+													</object>
+                            </property>
+                          </object>
+                        </child>
                         <child>
                           <object class="GtkStackPage">
                             <property name="title" translatable="true">Recent</property>
