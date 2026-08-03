@@ -24,7 +24,7 @@ use crate::{
     utils::{self, settings_manager},
 };
 
-use super::{MpdOutput, OutputControls, PlaybackControls, PlaybackState, Player, VolumeKnob};
+use super::{MpdOutput, OutputControls, PlaybackControls, PlaybackState, Player, VolumeControl};
 
 mod imp {
     use super::*;
@@ -86,7 +86,7 @@ mod imp {
         #[template_child]
         pub output_controls: TemplateChild<OutputControls>,
         #[template_child]
-        pub vol_knob: TemplateChild<VolumeKnob>,
+        pub vol_knob: TemplateChild<VolumeControl>,
 
         // Kept here so we can access it in snapshot()
         pub output_widgets: RefCell<Vec<MpdOutput>>,

@@ -11,7 +11,14 @@ use std::{cell::Cell, cmp::Ordering, rc::Rc, sync::OnceLock};
 
 use super::{AlbumCell, AlbumContentView, Library, TagsFilter};
 use crate::{
-    cache::{Cache, sqlite}, client::ClientState, common::{Album, ContentStack, Rating}, utils::{LazyInit, SearchableView, g_cmp_options, g_cmp_str_options, g_search_substr, settings_manager}, window::EuphonicaWindow,
+    cache::{Cache, sqlite},
+    client::ClientState,
+    common::{Album, ContentStack, Rating},
+    utils::{
+        LazyInit, SearchableView, g_cmp_options, g_cmp_str_options, g_search_substr,
+        settings_manager,
+    },
+    window::EuphonicaWindow,
 };
 
 mod imp {
@@ -76,6 +83,7 @@ mod imp {
 
         pub initializing: Cell<bool>,
         pub window: OnceCell<WeakRef<EuphonicaWindow>>,
+        pub return_view: RefCell<Option<String>>,
     }
 
     #[glib::object_subclass]
@@ -466,14 +474,18 @@ impl AlbumView {
                             let album = obj.downcast_ref::<Album>().unwrap();
                             !genres.is_disjoint(album.get_genres())
                         });
-                        this.imp().genres_filter.changed(gtk::FilterChange::MoreStrict);
+                        this.imp()
+                            .genres_filter
+                            .changed(gtk::FilterChange::MoreStrict);
                     } else {
                         this.imp().genres_filter.set_filter_func(|_| true);
-                        this.imp().genres_filter.changed(gtk::FilterChange::LessStrict);
+                        this.imp()
+                            .genres_filter
+                            .changed(gtk::FilterChange::LessStrict);
                     }
                 }
             ),
-            window
+            window,
         );
 
         self.imp().tags_filter_widget.setup(
@@ -485,20 +497,36 @@ impl AlbumView {
                     if !tags.is_empty() {
                         this.imp().tags_filter.set_filter_func(move |obj| {
                             let album = obj.downcast_ref::<Album>().unwrap();
-                            sqlite::album_has_any_of_tags(album.get_folder_uri(), &tags).unwrap_or(true)
+                            sqlite::album_has_any_of_tags(album.get_folder_uri(), &tags)
+                                .unwrap_or(true)
                         });
-                        this.imp().tags_filter.changed(gtk::FilterChange::MoreStrict);
+                        this.imp()
+                            .tags_filter
+                            .changed(gtk::FilterChange::MoreStrict);
                     } else {
                         this.imp().tags_filter.set_filter_func(|_| true);
-                        this.imp().tags_filter.changed(gtk::FilterChange::LessStrict);
+                        this.imp()
+                            .tags_filter
+                            .changed(gtk::FilterChange::LessStrict);
                     }
                 }
             ),
-            window
+            window,
         );
 
         let content_view = self.imp().content_view.get();
         content_view.setup(library, client_state, cache, window);
+        self.imp().content_page.connect_hiding(clone!(
+            #[weak(rename_to = this)]
+            self,
+            #[weak]
+            window,
+            move |_| {
+                if let Some(return_view) = this.imp().return_view.take() {
+                    window.switch_to_view(&return_view);
+                }
+            }
+        ));
         self.imp().content_page.connect_hidden(move |_| {
             content_view.unbind();
         });
@@ -509,10 +537,17 @@ impl AlbumView {
     }
 
     pub fn on_album_clicked(&self, album: &Album) {
+        self.on_album_clicked_from(album, None);
+    }
+
+    pub fn on_album_clicked_from(&self, album: &Album, return_view: Option<&str>) {
         // - Upon receiving click signal, get the list item at the indicated activate index.
         // - Extract album from that list item.
         // - Bind AlbumContentView to that album. The content view should then populate itself.
         let content_view = self.imp().content_view.get();
+        self.imp()
+            .return_view
+            .replace(return_view.map(str::to_owned));
         content_view.unbind();
         content_view.bind(album);
         if self
@@ -546,19 +581,14 @@ impl AlbumView {
             Some(self.imp().search_filter.clone()),
         );
         search_model.set_incremental(true);
-        let genres_model = gtk::FilterListModel::new(
-            Some(search_model),
-            Some(self.imp().genres_filter.clone())
-        );
+        let genres_model =
+            gtk::FilterListModel::new(Some(search_model), Some(self.imp().genres_filter.clone()));
         genres_model.set_incremental(true);
-        let tags_model = gtk::FilterListModel::new(
-            Some(genres_model),
-            Some(self.imp().tags_filter.clone())
-        );
+        let tags_model =
+            gtk::FilterListModel::new(Some(genres_model), Some(self.imp().tags_filter.clone()));
         tags_model.set_incremental(true);
-        
-        let sort_model =
-            gtk::SortListModel::new(Some(tags_model), Some(self.imp().sorter.clone()));
+
+        let sort_model = gtk::SortListModel::new(Some(tags_model), Some(self.imp().sorter.clone()));
         sort_model.set_incremental(true);
         let sel_model = SingleSelection::new(Some(sort_model));
 
@@ -583,7 +613,8 @@ impl AlbumView {
                 let item = list_item
                     .downcast_ref::<ListItem>()
                     .expect("Needs to be ListItem");
-                let album_cell = AlbumCell::new(item, cache, None, Some(window.clone()), Some(grid_view));
+                let album_cell =
+                    AlbumCell::new(item, cache, None, Some(window.clone()), Some(grid_view));
                 item.set_child(Some(&album_cell));
             }
         ));
@@ -648,28 +679,29 @@ impl AlbumView {
 impl LazyInit for AlbumView {
     fn populate(&self) {
         if let Some(library) = self.imp().library.upgrade()
-            && !self.imp().initializing.get() {
-                self.imp().initializing.set(true);
-                let stack = self.imp().stack.get();
-                let this = self.clone();
-                stack.show_spinner();
-                glib::spawn_future_local(async move {
-                    // Just get basic info first to reduce spinner time
-                    let _ = library.init_albums_and_albumartists().await;
-                    if library.albums().n_items() > 0 {
-                        stack.show_content();
-                    } else {
-                        stack.show_placeholder();
-                    }
-                    this.imp().initializing.set(false);
-                    // Now populate the stickers and genres
-                    let _ = futures::join!(
-                        library.init_album_stickers(),
-                        library.init_genres(),
-                        library.refresh_album_tags()
-                    );
-                });
-            }
+            && !self.imp().initializing.get()
+        {
+            self.imp().initializing.set(true);
+            let stack = self.imp().stack.get();
+            let this = self.clone();
+            stack.show_spinner();
+            glib::spawn_future_local(async move {
+                // Just get basic info first to reduce spinner time
+                let _ = library.init_albums_and_albumartists().await;
+                if library.albums().n_items() > 0 {
+                    stack.show_content();
+                } else {
+                    stack.show_placeholder();
+                }
+                this.imp().initializing.set(false);
+                // Now populate the stickers and genres
+                let _ = futures::join!(
+                    library.init_album_stickers(),
+                    library.init_genres(),
+                    library.refresh_album_tags()
+                );
+            });
+        }
     }
 }
 

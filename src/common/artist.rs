@@ -42,6 +42,19 @@ impl ArtistInfo {
         self.mbid.as_deref().unwrap_or(self.name.as_ref())
     }
 
+    /// Check whether two artist references can describe the same artist.
+    ///
+    /// When both references have MusicBrainz IDs, those IDs are authoritative.
+    /// If either reference lacks an ID, fall back to the readable name so that
+    /// incompletely tagged releases are not excluded from an otherwise
+    /// identified artist's discography.
+    pub fn matches(&self, other: &Self) -> bool {
+        match (self.mbid.as_deref(), other.mbid.as_deref()) {
+            (Some(self_mbid), Some(other_mbid)) => self_mbid == other_mbid,
+            _ => self.name == other.name,
+        }
+    }
+
     /// Add genres as discovered from albums, maintaining uniqueness.
     /// Useful at page init time when we fetch all the artists.
     pub fn insert_genres(&mut self, more_genres: &FxHashSet<String>) {
@@ -253,5 +266,33 @@ impl From<ArtistInfo> for Artist {
         let res = glib::Object::builder::<Self>().build();
         let _ = res.imp().info.set(info);
         res
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ArtistInfo;
+
+    fn artist(name: &str, mbid: Option<&str>) -> ArtistInfo {
+        let mut artist = ArtistInfo::new(name, None, false);
+        artist.mbid = mbid.map(str::to_owned);
+        artist
+    }
+
+    #[test]
+    fn missing_mbid_falls_back_to_name_when_matching() {
+        let identified = artist("Donald Fagen", Some("70047e57"));
+        let unidentified = artist("Donald Fagen", None);
+
+        assert!(identified.matches(&unidentified));
+        assert!(unidentified.matches(&identified));
+    }
+
+    #[test]
+    fn differing_mbids_remain_distinct_even_with_the_same_name() {
+        let first = artist("Shared Name", Some("first-id"));
+        let second = artist("Shared Name", Some("second-id"));
+
+        assert!(!first.matches(&second));
     }
 }

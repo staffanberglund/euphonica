@@ -164,7 +164,7 @@
     </child>
     <child>
       <object class="AdwPreferencesGroup">
-        <property name="title" translatable="true">Volume Knob</property>
+        <property name="title" translatable="true">Volume Control</property>
         <child>
           <object class="AdwComboRow" id="vol_knob_unit">
             <property name="title" translatable="true">Display unit</property>

@@ -20,6 +20,8 @@ mod imp {
         #[template_child]
         pub recent_btn: TemplateChild<SidebarButton>,
         #[template_child]
+        pub collection_btn: TemplateChild<SidebarButton>,
+        #[template_child]
         pub albums_btn: TemplateChild<SidebarButton>,
         #[template_child]
         pub artists_btn: TemplateChild<SidebarButton>,
@@ -143,6 +145,16 @@ impl Sidebar {
             move |btn| {
                 if btn.is_active() {
                     stack.set_visible_child_name("albums");
+                }
+            }
+        ));
+
+        self.imp().collection_btn.connect_toggled(clone!(
+            #[weak]
+            stack,
+            move |btn| {
+                if btn.is_active() {
+                    stack.set_visible_child_name("collection");
                 }
             }
         ));
@@ -406,6 +418,7 @@ impl Sidebar {
             ));
         for btn in [
             &self.imp().recent_btn.get(),
+            &self.imp().collection_btn.get(),
             &self.imp().albums_btn.get(),
             &self.imp().artists_btn.get(),
             &self.imp().folders_btn.get(),
@@ -430,6 +443,7 @@ impl Sidebar {
 
     pub fn set_view(&self, view_name: &str) {
         match view_name {
+            "collection" => self.imp().collection_btn.set_active(true),
             "albums" => self.imp().albums_btn.set_active(true),
             "artists" => self.imp().artists_btn.set_active(true),
             "folders" => self.imp().folders_btn.set_active(true),

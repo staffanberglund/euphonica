@@ -41,6 +41,47 @@ use super::{BATCH_SIZE, FETCH_LIMIT, StickerSetMode};
 static MAX_RETRIES: u32 = 3;
 static MAX_EXAMPLE_ALBUMS_PER_ALBUMARTIST: usize = 3;
 
+fn collect_albumartists(albums: &mut [AlbumInfo]) -> Vec<ArtistInfo> {
+    // Discover whether each readable name has exactly one known MBID. Missing
+    // IDs for that name can then safely inherit it. If two different IDs use
+    // the same name, keep all identities separate.
+    let mut mbids_by_name: FxHashMap<String, Option<String>> = FxHashMap::default();
+    for artist in albums.iter().flat_map(|album| album.artists.iter()) {
+        if let Some(mbid) = artist.mbid.as_ref() {
+            mbids_by_name
+                .entry(artist.name.clone())
+                .and_modify(|known| {
+                    if known.as_ref().is_some_and(|known| known != mbid) {
+                        *known = None;
+                    }
+                })
+                .or_insert_with(|| Some(mbid.clone()));
+        }
+    }
+
+    let mut albumartists: FxHashMap<String, ArtistInfo> = FxHashMap::default();
+    for album_info in albums.iter_mut() {
+        let example_uri = &album_info.example_uri;
+        for artist in album_info.artists.iter_mut() {
+            if artist.mbid.is_none()
+                && let Some(Some(mbid)) = mbids_by_name.get(&artist.name)
+            {
+                artist.mbid = Some(mbid.clone());
+            }
+
+            let existing = albumartists
+                .entry(artist.get_comp_id().to_owned())
+                .or_insert_with(|| artist.clone());
+            existing.insert_genres(&album_info.genres);
+            if existing.example_uris.len() < MAX_EXAMPLE_ALBUMS_PER_ALBUMARTIST {
+                existing.example_uris.push(example_uri.clone());
+            }
+        }
+    }
+
+    albumartists.into_values().collect()
+}
+
 // Thin wrapper around blocking mpd::Clients. It contains two separate client
 // objects connected to the same address, each living on their own std::thread.
 // One (foreground) is used for short interactive operations like playback
@@ -881,13 +922,44 @@ impl MpdWrapper {
             .foreground(
                 Task::List(
                     Term::Tag(tags::ALBUM.into()),
-                    query,
+                    query.clone(),
                     Some(tags::ALBUMARTIST),
                     s,
                 ),
                 r,
             )
             .await?;
+
+        // `list Album group AlbumArtist` collapses releases which share both
+        // values. Detect likely collisions cheaply, then fetch all songs only
+        // for those titles so their album MBID/folder can separate them.
+        let mut ambiguous_album_titles = FxHashSet::default();
+        for disambiguating_tag in [tags::DATE, tags::ORIGINAL_DATE, tags::ALBUM_MBID] {
+            let (s, r) = oneshot::channel();
+            let grouped_disambiguators = self
+                .foreground(
+                    Task::List(
+                        Term::Tag(Cow::Borrowed(disambiguating_tag)),
+                        query.clone(),
+                        Some(tags::ALBUM),
+                        s,
+                    ),
+                    r,
+                )
+                .await?;
+            for (album_title, values) in grouped_disambiguators.groups {
+                if values
+                    .into_iter()
+                    .filter(|value| !value.is_empty())
+                    .unique()
+                    .take(2)
+                    .count()
+                    > 1
+                {
+                    ambiguous_album_titles.insert(album_title);
+                }
+            }
+        }
 
         let (album_count, chunked_queries_windows): (usize, Vec<Vec<(Query, Window)>>) = asyncified
             .call(move |_| {
@@ -897,10 +969,16 @@ impl MpdWrapper {
                     for tag in tags.into_iter() {
                         // Only care if tag is not empty
                         if !tag.is_empty() {
+                            let is_ambiguous = ambiguous_album_titles.contains(&tag);
                             let mut query = Query::new();
                             query.and(Term::Tag(Cow::Borrowed(tags::ALBUM)), tag);
                             query.and(Term::Tag(Cow::Borrowed(tags::ALBUMARTIST)), key.clone());
-                            all_queries_windows.push((query, mpd::search::Window::from((0, 1))));
+                            let window = if is_ambiguous {
+                                mpd::search::Window::from(None)
+                            } else {
+                                mpd::search::Window::from((0, 1))
+                            };
+                            all_queries_windows.push((query, window));
                         }
                     }
                 }
@@ -932,6 +1010,12 @@ impl MpdWrapper {
                                 tags::ALBUMARTIST,
                                 tags::ALBUMARTISTSORT,
                                 tags::ALBUMARTIST_MBID,
+                                // SongInfo falls back to these when AlbumArtist
+                                // is absent, matching MPD's AlbumArtist search
+                                // semantics.
+                                tags::ARTIST,
+                                tags::ARTISTSORT,
+                                tags::ARTIST_MBID,
                                 tags::ALBUM_MBID,
                                 tags::ORIGINAL_DATE,
                                 tags::DATE,
@@ -948,42 +1032,20 @@ impl MpdWrapper {
         // Yet more off thread work
         let (album_infos, artist_infos) = asyncified
             .call(move |_| {
-                let mut albumartists: FxHashMap<String, ArtistInfo> = FxHashMap::default();
                 let mut albums: Vec<AlbumInfo> = Vec::with_capacity(album_count);
+                let mut already_parsed: FxHashSet<String> = FxHashSet::default();
 
                 for i in 0..songs.len() {
-                    if let Some(album_info) = std::mem::take(&mut songs[i]).into_album_info() {
-                        // Handle artist first
-                        let example_uri = &album_info.example_uri;
-                        for artist in album_info.artists.iter() {
-                            let comp_id = artist.get_comp_id();
-                            let existing =
-                                albumartists.entry(comp_id.to_string()).or_insert_with(|| {
-                                    // Haven't seen this artist before => push new
-                                    artist.to_owned()
-                                });
-
-                            // Note to self: Album genres are parsed by the Song constructor, which runs in a child thread (see MpdClient::foreground).
-                            // However, artist genre parsing requires unioning all those genre sets from their albums. This is currently being done here
-                            // (on the UI thread).
-                            // TODO: move to another thread somehow
-                            existing.insert_genres(&album_info.genres);
-                            // Slack off here (we'll not use all of them anyway; alloc only what's needed)
-                            if existing.example_uris.len() < MAX_EXAMPLE_ALBUMS_PER_ALBUMARTIST {
-                                existing.example_uris.push(example_uri.to_owned());
-                            }
-                        }
+                    if let Some(album_info) = std::mem::take(&mut songs[i]).into_album_info()
+                        && already_parsed.insert(album_info.get_comp_id().to_owned())
+                    {
                         albums.push(album_info);
                     }
                 }
 
-                (
-                    albums,
-                    albumartists
-                        .into_iter()
-                        .map(|p| p.1)
-                        .collect::<Vec<ArtistInfo>>(),
-                )
+                let albumartists = collect_albumartists(&mut albums);
+
+                (albums, albumartists)
             })
             .await;
         Ok((
@@ -1019,8 +1081,7 @@ impl MpdWrapper {
             if let Some(mbid) = tup.2 {
                 query.and(Term::Tag(tags::ALBUM_MBID.into()), mbid);
             }
-            let (albums, _) = self.get_albums_and_albumartists_by_query(query)
-                .await?;
+            let (albums, _) = self.get_albums_and_albumartists_by_query(query).await?;
 
             for album in albums {
                 respond(album)
@@ -1108,7 +1169,13 @@ impl MpdWrapper {
                 tags::ALBUM,
             ]
         } else {
-            vec![tags::ARTIST, tags::ARTISTSORT, tags::ARTIST_MBID]
+            vec![
+                tags::ARTIST,
+                tags::ARTISTSORT,
+                tags::ARTIST_MBID,
+                tags::ALBUM,
+                tags::GENRE,
+            ]
         };
         let mut already_parsed: FxHashSet<String> = FxHashSet::default();
         let (s, r) = oneshot::channel();
@@ -1146,7 +1213,10 @@ impl MpdWrapper {
                 } else {
                     std::mem::take(&mut song.artists)
                 };
-                for artist in artists.into_iter() {
+                for mut artist in artists.into_iter() {
+                    if let Some(album) = song.album.as_ref() {
+                        artist.insert_genres(&album.genres);
+                    }
                     if already_parsed.insert(artist.get_comp_id().to_owned()) {
                         respond(artist.into());
                     }

@@ -17,6 +17,8 @@
     <file preprocess="xml-stripblanks">gtk/theme-selector.ui</file>
     <file preprocess="xml-stripblanks">gtk/content-view.ui</file>
     <file preprocess="xml-stripblanks">gtk/library/recent-view.ui</file>
+    <file preprocess="xml-stripblanks">gtk/library/collection-view.ui</file>
+    <file preprocess="xml-stripblanks">gtk/library/collection-row.ui</file>
     <file preprocess="xml-stripblanks">gtk/library/album-view.ui</file>
     <file preprocess="xml-stripblanks">gtk/library/album-cell.ui</file>
     <file preprocess="xml-stripblanks">gtk/library/artist-tag-button.ui</file>
@@ -49,6 +51,7 @@
     <file preprocess="xml-stripblanks">gtk/player/output.ui</file>
     <file preprocess="xml-stripblanks">gtk/player/output-controls.ui</file>
     <file preprocess="xml-stripblanks">gtk/player/volume-knob.ui</file>
+    <file preprocess="xml-stripblanks">gtk/player/volume-control.ui</file>
     <file preprocess="xml-stripblanks">gtk/preferences/dialog.ui</file>
     <file preprocess="xml-stripblanks">gtk/preferences/client.ui</file>
     <file preprocess="xml-stripblanks">gtk/preferences/integrations.ui</file>

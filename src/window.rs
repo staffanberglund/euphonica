@@ -19,10 +19,16 @@
  */
 
 use crate::{
-    application::EuphonicaApplication, client::{ClientState, ConnectionState, Result as ClientResult}, common::{Album, Artist, INode, ThemeSelector, paintables::FadePaintable}, library::{
-        AlbumView, ArtistContentView, ArtistView, DynamicPlaylistEditorView, DynamicPlaylistView,
-        FolderView, PlaylistView, RecentView,
-    }, player::{Player, PlayerBar, QueueView}, sidebar::Sidebar, utils::{self, LazyInit, SearchableView, settings_manager},
+    application::EuphonicaApplication,
+    client::{ClientState, ConnectionState, Result as ClientResult},
+    common::{Album, Artist, INode, ThemeSelector, paintables::FadePaintable},
+    library::{
+        AlbumView, ArtistContentView, ArtistView, CollectionView, DynamicPlaylistEditorView,
+        DynamicPlaylistView, FolderView, PlaylistView, RecentView,
+    },
+    player::{Player, PlayerBar, QueueView},
+    sidebar::Sidebar,
+    utils::{self, LazyInit, SearchableView, settings_manager},
 };
 use adw::{ColorScheme, StyleManager, prelude::*, subclass::prelude::*};
 use auto_palette::{ImageData, Palette, color::RGB};
@@ -175,6 +181,8 @@ mod imp {
         // Main views
         #[template_child]
         pub recent_view: TemplateChild<RecentView>,
+        #[template_child]
+        pub collection_view: TemplateChild<CollectionView>,
         #[template_child]
         pub album_view: TemplateChild<AlbumView>,
         #[template_child]
@@ -523,6 +531,7 @@ mod imp {
             // dispose window content properly.
             [
                 self.recent_view.upcast_ref::<gtk::Widget>(),
+                self.collection_view.upcast_ref::<gtk::Widget>(),
                 self.album_view.upcast_ref::<gtk::Widget>(),
                 self.artist_view.upcast_ref::<gtk::Widget>(),
                 self.folder_view.upcast_ref::<gtk::Widget>(),
@@ -1261,6 +1270,9 @@ impl EuphonicaWindow {
         win.imp()
             .recent_view
             .setup(app.get_library(), app.get_player(), app.get_cache(), &win);
+        win.imp()
+            .collection_view
+            .setup(app.get_library(), app.get_cache(), &win);
         win.imp().album_view.setup(
             app.get_library(),
             app.get_cache(),
@@ -1551,6 +1563,9 @@ impl EuphonicaWindow {
                 "recent" => {
                     imp.recent_view.populate();
                 }
+                "collection" => {
+                    imp.collection_view.populate();
+                }
                 "albums" => {
                     imp.album_view.populate();
                 }
@@ -1576,6 +1591,9 @@ impl EuphonicaWindow {
             match visible_child_name.as_str() {
                 "albums" => {
                     imp.album_view.trigger_search();
+                }
+                "collection" => {
+                    imp.collection_view.trigger_search();
                 }
                 "artists" => {
                     imp.artist_view.trigger_search();
@@ -1628,6 +1646,10 @@ impl EuphonicaWindow {
                 .search_bar()
                 .set_key_capture_widget((curr_child == "albums").then_some(self));
 
+            imp.collection_view
+                .search_bar()
+                .set_key_capture_widget((curr_child == "collection").then_some(self));
+
             imp.artist_view
                 .search_bar()
                 .set_key_capture_widget((curr_child == "artists").then_some(self));
@@ -1660,6 +1682,18 @@ impl EuphonicaWindow {
 
     pub fn goto_album(&self, album: &Album) {
         self.imp().album_view.on_album_clicked(album);
+        self.imp().sidebar.set_view("albums");
+        if self.imp().split_view.shows_sidebar() {
+            self.imp()
+                .split_view
+                .set_show_sidebar(!self.imp().split_view.is_collapsed());
+        }
+    }
+
+    pub fn goto_album_from_collection(&self, album: &Album) {
+        self.imp()
+            .album_view
+            .on_album_clicked_from(album, Some("collection"));
         self.imp().sidebar.set_view("albums");
         if self.imp().split_view.shows_sidebar() {
             self.imp()
@@ -1778,7 +1812,7 @@ impl EuphonicaWindow {
             .unwrap()
     }
 
-    fn switch_to_view(&self, view_name: &str) {
+    pub(crate) fn switch_to_view(&self, view_name: &str) {
         self.imp().sidebar.get().set_view(view_name);
     }
 
@@ -1790,6 +1824,9 @@ impl EuphonicaWindow {
             .build();
         let view_albums_action = gio::ActionEntry::builder("view-albums")
             .activate(move |this: &Self, _, _| this.switch_to_view("albums"))
+            .build();
+        let view_collection_action = gio::ActionEntry::builder("view-collection")
+            .activate(move |this: &Self, _, _| this.switch_to_view("collection"))
             .build();
         let view_artists_action = gio::ActionEntry::builder("view-artists")
             .activate(move |this: &Self, _, _| this.switch_to_view("artists"))
@@ -1829,6 +1866,7 @@ impl EuphonicaWindow {
         // These go into the "win" group
         self.add_action_entries([
             view_recent_action,
+            view_collection_action,
             view_albums_action,
             view_artists_action,
             view_folders_action,
@@ -1836,7 +1874,7 @@ impl EuphonicaWindow {
             view_playlists_action,
             view_queue_action,
             save_action,
-            search_current_view_action
+            search_current_view_action,
         ]);
 
         // To skip having to deal with widget focus we'll define all the actions at the app level.

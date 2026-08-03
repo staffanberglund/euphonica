@@ -9,9 +9,10 @@ mod playback_controls;
 mod queue_view;
 mod ratio_center_box;
 mod seekbar2;
+mod volume_control;
 
-use knob::VolumeKnob;
 use output::MpdOutput;
+use volume_control::VolumeControl;
 
 pub use bar::PlayerBar;
 pub use controller::{PlaybackState, PlaybackFlow, Player, get_next_replaygain};
