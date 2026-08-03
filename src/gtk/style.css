@@ -220,5 +220,11 @@ listview > row {
 }
 
 .collection-song {
-  min-height: 32px;
+  min-height: 24px;
+}
+
+.collection-song button {
+  min-height: 24px;
+  min-width: 24px;
+  padding: 0;
 }
