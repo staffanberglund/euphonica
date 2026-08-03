@@ -138,7 +138,7 @@ impl CollectionNode {
         self.imp().children.clone()
     }
 
-    fn load_songs(&self, library: &Library) {
+    fn load_songs(&self, library: &Library, tree_row: &TreeListRow, collection: &CollectionView) {
         let imp = self.imp();
         if self.kind() != CollectionNodeKind::Album
             || imp.children_loading.get()
@@ -160,6 +160,10 @@ impl CollectionNode {
             self,
             #[strong]
             library,
+            #[weak]
+            tree_row,
+            #[weak]
+            collection,
             async move {
                 let mut songs = Vec::new();
                 let result = library
@@ -201,6 +205,10 @@ impl CollectionNode {
                             "Couldn’t load songs",
                         ));
                     }
+                }
+
+                if tree_row.is_expanded() {
+                    collection.request_follow_expansion(&tree_row);
                 }
             }
         ));
@@ -250,6 +258,7 @@ mod row_imp {
         pub expanded_signal: RefCell<Option<(TreeListRow, SignalHandlerId)>>,
         pub album: WeakRef<Album>,
         pub library: WeakRef<Library>,
+        pub collection: WeakRef<CollectionView>,
         pub window: WeakRef<EuphonicaWindow>,
     }
 
@@ -331,8 +340,9 @@ impl CollectionRow {
         glib::Object::new()
     }
 
-    fn setup(&self, library: &Library, window: &EuphonicaWindow) {
+    fn setup(&self, library: &Library, collection: &CollectionView, window: &EuphonicaWindow) {
         self.imp().library.set(Some(library));
+        self.imp().collection.set(Some(collection));
         self.imp().window.set(Some(window));
     }
 
@@ -346,6 +356,8 @@ impl CollectionRow {
         imp.content.remove_css_class("collection-group");
         imp.content.remove_css_class("collection-album");
         imp.content.remove_css_class("collection-song");
+        imp.content.set_margin_top(4);
+        imp.content.set_margin_bottom(4);
         imp.title.remove_css_class("heading");
         imp.title.remove_css_class("caption-heading");
         imp.subtitle.set_visible(false);
@@ -370,6 +382,34 @@ impl CollectionRow {
         imp.bound_album_id.take();
         imp.bound_artist_name.take();
         imp.album.set(None);
+
+        if matches!(
+            node.kind(),
+            CollectionNodeKind::Genre | CollectionNodeKind::AlbumArtist | CollectionNodeKind::Album
+        ) {
+            let expansion_node = node.clone();
+            let signal_id = tree_row.connect_expanded_notify(clone!(
+                #[weak(rename_to = this)]
+                self,
+                move |tree_row| {
+                    if !tree_row.is_expanded() {
+                        return;
+                    }
+                    let imp = this.imp();
+                    let Some(collection) = imp.collection.upgrade() else {
+                        return;
+                    };
+                    collection.request_follow_expansion(tree_row);
+                    if expansion_node.kind() == CollectionNodeKind::Album
+                        && let Some(library) = imp.library.upgrade()
+                    {
+                        expansion_node.load_songs(&library, tree_row, &collection);
+                    }
+                }
+            ));
+            imp.expanded_signal
+                .replace(Some((tree_row.clone(), signal_id)));
+        }
 
         match node.kind() {
             CollectionNodeKind::Section => {
@@ -442,24 +482,11 @@ impl CollectionRow {
                 imp.cover.show_spinner();
                 imp.bound_album_id.replace(Some(album_id.clone()));
 
-                let expansion_node = node.clone();
-                let signal_id = tree_row.connect_expanded_notify(clone!(
-                    #[weak(rename_to = this)]
-                    self,
-                    move |tree_row| {
-                        if tree_row.is_expanded()
-                            && let Some(library) = this.imp().library.upgrade()
-                        {
-                            expansion_node.load_songs(&library);
-                        }
-                    }
-                ));
-                imp.expanded_signal
-                    .replace(Some((tree_row.clone(), signal_id)));
                 if tree_row.is_expanded()
                     && let Some(library) = imp.library.upgrade()
+                    && let Some(collection) = imp.collection.upgrade()
                 {
-                    node.load_songs(&library);
+                    node.load_songs(&library, tree_row, &collection);
                 }
 
                 glib::spawn_future_local(clone!(
@@ -500,6 +527,8 @@ impl CollectionRow {
                 };
                 imp.expander.set_hide_expander(true);
                 imp.content.add_css_class("collection-song");
+                imp.content.set_margin_top(2);
+                imp.content.set_margin_bottom(2);
                 imp.song_index.set_label(&index);
                 imp.song_index.set_visible(!index.is_empty());
                 imp.title.set_label(song.get_name());
@@ -688,12 +717,14 @@ impl CollectionView {
         factory.connect_setup(clone!(
             #[strong]
             library,
+            #[weak(rename_to = collection)]
+            self,
             #[weak]
             window,
             move |_, object| {
                 let item = object.downcast_ref::<ListItem>().expect("Needs a ListItem");
                 let row = CollectionRow::new();
-                row.setup(&library, &window);
+                row.setup(&library, &collection, &window);
                 item.set_child(Some(&row));
             }
         ));
@@ -786,6 +817,87 @@ impl CollectionView {
 
     pub fn search_bar(&self) -> gtk::SearchBar {
         self.imp().search_bar.get()
+    }
+
+    fn request_follow_expansion(&self, tree_row: &TreeListRow) {
+        glib::idle_add_local_once(clone!(
+            #[weak(rename_to = this)]
+            self,
+            #[weak]
+            tree_row,
+            move || this.scroll_to_last_descendant(&tree_row)
+        ));
+    }
+
+    fn scroll_to_last_descendant(&self, expanded_row: &TreeListRow) {
+        if !expanded_row.is_expanded() {
+            return;
+        }
+        let Some(tree) = self.imp().tree.get() else {
+            return;
+        };
+        let Some(parent_position) = self.tree_row_position(expanded_row) else {
+            return;
+        };
+
+        let parent_depth = expanded_row.depth();
+        let mut last_descendant = parent_position;
+        for position in (parent_position + 1)..tree.n_items() {
+            let Some(row) = tree.item(position).and_downcast::<TreeListRow>() else {
+                break;
+            };
+            if row.depth() <= parent_depth {
+                break;
+            }
+            last_descendant = position;
+        }
+
+        if last_descendant > parent_position {
+            let list_view = self.imp().list_view.get();
+            list_view.scroll_to(last_descendant, gtk::ListScrollFlags::NONE, None);
+
+            // Let GTK reveal the final child first. On the following frame,
+            // ensure that did not scroll the expanded parent out of view. If
+            // the whole range fits this is a no-op; otherwise it caps the
+            // movement with the parent row at the top of the viewport.
+            list_view.add_tick_callback(clone!(
+                #[weak(rename_to = this)]
+                self,
+                #[weak]
+                expanded_row,
+                #[upgrade_or]
+                glib::ControlFlow::Break,
+                move |_, _| {
+                    glib::idle_add_local_once(clone!(
+                        #[weak]
+                        this,
+                        #[weak]
+                        expanded_row,
+                        move || {
+                            if expanded_row.is_expanded()
+                                && let Some(position) = this.tree_row_position(&expanded_row)
+                            {
+                                this.imp().list_view.scroll_to(
+                                    position,
+                                    gtk::ListScrollFlags::NONE,
+                                    None,
+                                );
+                            }
+                        }
+                    ));
+                    glib::ControlFlow::Break
+                }
+            ));
+        }
+    }
+
+    fn tree_row_position(&self, target: &TreeListRow) -> Option<u32> {
+        let tree = self.imp().tree.get()?;
+        (0..tree.n_items()).find(|position| {
+            tree.item(*position)
+                .and_downcast::<TreeListRow>()
+                .is_some_and(|row| row == *target)
+        })
     }
 
     fn rebuild(&self) {
@@ -970,6 +1082,15 @@ impl LazyInit for CollectionView {
             return;
         };
         if self.imp().initializing.get() {
+            return;
+        }
+        if self
+            .imp()
+            .roots
+            .get()
+            .is_some_and(|roots| roots.n_items() > 0)
+        {
+            self.imp().stack.show_content();
             return;
         }
         if library.albums().n_items() > 0 {
