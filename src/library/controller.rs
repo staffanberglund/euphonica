@@ -51,6 +51,8 @@ mod imp {
         // AlbumArtists are always initialised along with Albums as fetching one requires the other anyway.
         #[derivative(Default(value = "gio::ListStore::new::<Artist>()"))]
         pub albumartists: gio::ListStore,
+        pub albums_and_albumartists_init_lock: async_lock::Mutex<()>,
+        pub albums_and_albumartists_initializing: Cell<bool>,
         pub albums_and_albumartists_initialized: Cell<bool>,
         #[derivative(Default(value = "gio::ListStore::new::<Artist>()"))]
         pub artists: gio::ListStore,
@@ -451,6 +453,10 @@ impl Library {
         self.imp().albums.clone()
     }
 
+    pub fn albums_and_albumartists_initializing(&self) -> bool {
+        self.imp().albums_and_albumartists_initializing.get()
+    }
+
     /// Get a reference to the list of distinct genres
     pub fn genres(&self) -> gio::ListStore {
         self.imp().genres.clone()
@@ -708,19 +714,31 @@ impl Library {
     /// During the process we'll also produce albumartists as a side effect.
     /// Note: this function no longer fetches stickers s.t. we can return the grid to the user earlier.
     pub async fn init_albums_and_albumartists(&self) -> ClientResult<()> {
+        // Album and Collection views share this model and can request it at
+        // nearly the same time. Wait for an in-flight request instead of
+        // treating "started" as "finished" and briefly exposing an empty model.
+        let _guard = self.imp().albums_and_albumartists_init_lock.lock().await;
         if !self.imp().albums_and_albumartists_initialized.get() {
-            self.imp().albums_and_albumartists_initialized.set(true);
+            self.imp().albums_and_albumartists_initializing.set(true);
             let album_model = self.imp().albums.clone();
             album_model.remove_all();
             let albumartist_model = self.imp().albumartists.clone();
             albumartist_model.remove_all();
-            let (albums, artists) = self.client()
-                .get_albums_and_albumartists_by_query(
-                    Query::new()
-                )
-                .await?;
+            let result = self
+                .client()
+                .get_albums_and_albumartists_by_query(Query::new())
+                .await;
+            let (albums, artists) = match result {
+                Ok(result) => result,
+                Err(error) => {
+                    self.imp().albums_and_albumartists_initializing.set(false);
+                    return Err(error);
+                }
+            };
             album_model.extend_from_slice(&albums);
             albumartist_model.extend_from_slice(&artists);
+            self.imp().albums_and_albumartists_initialized.set(true);
+            self.imp().albums_and_albumartists_initializing.set(false);
         }
         Ok(())
     }

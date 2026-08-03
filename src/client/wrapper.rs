@@ -922,13 +922,44 @@ impl MpdWrapper {
             .foreground(
                 Task::List(
                     Term::Tag(tags::ALBUM.into()),
-                    query,
+                    query.clone(),
                     Some(tags::ALBUMARTIST),
                     s,
                 ),
                 r,
             )
             .await?;
+
+        // `list Album group AlbumArtist` collapses releases which share both
+        // values. Detect likely collisions cheaply, then fetch all songs only
+        // for those titles so their album MBID/folder can separate them.
+        let mut ambiguous_album_titles = FxHashSet::default();
+        for disambiguating_tag in [tags::DATE, tags::ORIGINAL_DATE, tags::ALBUM_MBID] {
+            let (s, r) = oneshot::channel();
+            let grouped_disambiguators = self
+                .foreground(
+                    Task::List(
+                        Term::Tag(Cow::Borrowed(disambiguating_tag)),
+                        query.clone(),
+                        Some(tags::ALBUM),
+                        s,
+                    ),
+                    r,
+                )
+                .await?;
+            for (album_title, values) in grouped_disambiguators.groups {
+                if values
+                    .into_iter()
+                    .filter(|value| !value.is_empty())
+                    .unique()
+                    .take(2)
+                    .count()
+                    > 1
+                {
+                    ambiguous_album_titles.insert(album_title);
+                }
+            }
+        }
 
         let (album_count, chunked_queries_windows): (usize, Vec<Vec<(Query, Window)>>) = asyncified
             .call(move |_| {
@@ -938,10 +969,16 @@ impl MpdWrapper {
                     for tag in tags.into_iter() {
                         // Only care if tag is not empty
                         if !tag.is_empty() {
+                            let is_ambiguous = ambiguous_album_titles.contains(&tag);
                             let mut query = Query::new();
                             query.and(Term::Tag(Cow::Borrowed(tags::ALBUM)), tag);
                             query.and(Term::Tag(Cow::Borrowed(tags::ALBUMARTIST)), key.clone());
-                            all_queries_windows.push((query, mpd::search::Window::from((0, 1))));
+                            let window = if is_ambiguous {
+                                mpd::search::Window::from(None)
+                            } else {
+                                mpd::search::Window::from((0, 1))
+                            };
+                            all_queries_windows.push((query, window));
                         }
                     }
                 }
@@ -973,6 +1010,12 @@ impl MpdWrapper {
                                 tags::ALBUMARTIST,
                                 tags::ALBUMARTISTSORT,
                                 tags::ALBUMARTIST_MBID,
+                                // SongInfo falls back to these when AlbumArtist
+                                // is absent, matching MPD's AlbumArtist search
+                                // semantics.
+                                tags::ARTIST,
+                                tags::ARTISTSORT,
+                                tags::ARTIST_MBID,
                                 tags::ALBUM_MBID,
                                 tags::ORIGINAL_DATE,
                                 tags::DATE,
@@ -990,9 +1033,12 @@ impl MpdWrapper {
         let (album_infos, artist_infos) = asyncified
             .call(move |_| {
                 let mut albums: Vec<AlbumInfo> = Vec::with_capacity(album_count);
+                let mut already_parsed: FxHashSet<String> = FxHashSet::default();
 
                 for i in 0..songs.len() {
-                    if let Some(album_info) = std::mem::take(&mut songs[i]).into_album_info() {
+                    if let Some(album_info) = std::mem::take(&mut songs[i]).into_album_info()
+                        && already_parsed.insert(album_info.get_comp_id().to_owned())
+                    {
                         albums.push(album_info);
                     }
                 }
@@ -1035,8 +1081,7 @@ impl MpdWrapper {
             if let Some(mbid) = tup.2 {
                 query.and(Term::Tag(tags::ALBUM_MBID.into()), mbid);
             }
-            let (albums, _) = self.get_albums_and_albumartists_by_query(query)
-                .await?;
+            let (albums, _) = self.get_albums_and_albumartists_by_query(query).await?;
 
             for album in albums {
                 respond(album)

@@ -177,8 +177,8 @@ mod imp {
                 obj.set_accels_for_action("app.fullscreen", &["F11"]);
                 obj.set_accels_for_action("app.refresh", &["F5"]);
                 obj.set_accels_for_action("app.update-db", &["F6"]);
-                obj.set_accels_for_action("app.toggle-visualizer", &["F8"]);                
-                
+                obj.set_accels_for_action("app.toggle-visualizer", &["F8"]);
+
                 // Playback shortcuts
                 obj.set_accels_for_action("app.toggle-playback", &["<Ctrl>p"]);
                 obj.set_accels_for_action("app.next-song", &["<Shift>greater"]);
@@ -618,11 +618,12 @@ impl EuphonicaApplication {
             self.set_accels_for_action("win.view-dynamic-playlists", &["<Ctrl>5"]);
             self.set_accels_for_action("win.view-playlists", &["<Ctrl>6"]);
             self.set_accels_for_action("win.view-queue", &["<Ctrl>7"]);
+            self.set_accels_for_action("win.view-collection", &["<Ctrl>8"]);
             self.set_accels_for_action("win.search-current-view", &["<Ctrl>f"]);
-            self.set_accels_for_action("queue.scroll-to-playing", &["<Ctrl><Shift>o"]);  // toggle autoscroll on-off, bad name
+            self.set_accels_for_action("queue.scroll-to-playing", &["<Ctrl><Shift>o"]); // toggle autoscroll on-off, bad name
             self.set_accels_for_action("queue.stop-and-clear", &["<Alt>c"]);
             self.set_accels_for_action("win.save", &["<Ctrl>s"]);
-            self.set_accels_for_action("queue.jump-to-current", &["<Ctrl>o"]);  
+            self.set_accels_for_action("queue.jump-to-current", &["<Ctrl>o"]);
             self.set_accels_for_action("queue.toggle-autoscroll", &["<Ctrl>u"]);
             self.set_accels_for_action("playlist-editor.undo", &["<Ctrl>z"]);
             self.set_accels_for_action("playlist-editor.redo", &["<Ctrl>y"]);

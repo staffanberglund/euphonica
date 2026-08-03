@@ -205,3 +205,20 @@ listview > row {
 	border-radius: 999px;
 	background: var(--accent-color);
 }
+
+.collection-section {
+  border-bottom: 1px solid var(--border-color);
+  padding-top: 6px;
+}
+
+.collection-group {
+  min-height: 28px;
+}
+
+.collection-album {
+  min-height: 50px;
+}
+
+.collection-song {
+  min-height: 32px;
+}

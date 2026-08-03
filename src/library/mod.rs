@@ -1,18 +1,19 @@
+mod collection_view;
 mod recent_view;
 
 mod album_cell;
 mod album_content_view;
 mod album_view;
+mod artist_tag_button;
 mod tag;
 mod tag_button;
-mod artist_tag_button;
 mod tags_section;
 
 mod artist_cell;
 mod artist_content_view;
 mod artist_view;
-mod discography_year;
 mod discography_album;
+mod discography_year;
 
 mod folder_view;
 
@@ -34,14 +35,15 @@ mod tags_filter;
 // The Library controller itself
 mod controller;
 
+pub use collection_view::CollectionView;
 pub use recent_view::RecentView;
 
 use album_cell::AlbumCell;
 pub use album_content_view::AlbumContentView;
-pub use tag::Tag;
-pub use tags_section::TagsSection;
-pub use tags_filter::TagsFilter;
 pub use album_view::AlbumView;
+pub use tag::Tag;
+pub use tags_filter::TagsFilter;
+pub use tags_section::TagsSection;
 
 use artist_cell::ArtistCell;
 pub use artist_content_view::ArtistContentView;
