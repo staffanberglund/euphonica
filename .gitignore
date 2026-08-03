@@ -8,3 +8,4 @@ build-flatpak/
 repo/
 build/
 .flatpak-builder/
+dev-build.sh

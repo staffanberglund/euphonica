@@ -4,6 +4,7 @@
   <template class="EuphonicaDynamicPlaylistView" parent="GtkWidget">
     <child>
       <object class="AdwNavigationView" id="nav_view">
+        <property name="pop-on-escape">false</property>
         <child>
           <object class="AdwNavigationPage">
             <property name="title">Dynamic Playlists</property>
@@ -13,6 +14,13 @@
                 <child type="top">
 					        <object class="AdwHeaderBar">
                     <property name="show-title">false</property>
+                    <child type="start">
+                      <object class="GtkButton">
+                        <property name="action-name">win.navigate-back</property>
+                        <property name="icon-name">left-symbolic</property>
+                        <property name="tooltip-text" translatable="true">Back</property>
+                      </object>
+                    </child>
                     <child type="start">
                       <object class="GtkButton" id="show_sidebar">
                         <property name="icon-name">dock-left-symbolic</property>
