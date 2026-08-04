@@ -19,9 +19,10 @@ use crate::{
         placeholders::{EMPTY_ALBUM_STRING, EMPTY_ARTIST_STRING},
     },
     client::{ClientState, state::StickersSupportLevel},
-    common::{PictureStack, Rating, Song},
+    common::{Album, Artist, PictureStack, Rating, Song},
     player::seekbar2::Seekbar,
     utils::{self, settings_manager},
+    window::EuphonicaWindow,
 };
 
 use super::{MpdOutput, OutputControls, PlaybackControls, PlaybackState, Player, VolumeControl};
@@ -237,12 +238,66 @@ impl PlayerPane {
         }
     }
 
-    pub fn setup(&self, player: &Player, cache: Rc<Cache>, client_state: &ClientState) {
+    pub fn setup(
+        &self,
+        player: &Player,
+        cache: Rc<Cache>,
+        client_state: &ClientState,
+        window: &EuphonicaWindow,
+    ) {
         self.imp().player.set(Some(player));
         self.bind_state(player, cache, client_state);
         self.imp().playback_controls.setup(player);
         self.imp().output_controls.setup(player);
         self.imp().seekbar.setup(player);
+
+        let artist_label = self.imp().artist.get();
+        let artist_click = gtk::GestureClick::new();
+        artist_click.set_button(gtk::gdk::BUTTON_PRIMARY);
+        artist_click.connect_released(clone!(
+            #[weak]
+            player,
+            #[weak]
+            window,
+            move |_, _, _, _| {
+                let Some(artist) = player
+                    .current_song()
+                    .and_then(|song| song.get_artists().first().cloned())
+                    .map(Artist::from)
+                else {
+                    return;
+                };
+                window.goto_artist(&artist);
+            }
+        ));
+        artist_label.add_controller(artist_click);
+        artist_label.add_css_class("clickable-label");
+        artist_label.set_cursor_from_name(Some("pointer"));
+        artist_label.set_tooltip_text(Some("View artist"));
+
+        let album_label = self.imp().album.get();
+        let album_click = gtk::GestureClick::new();
+        album_click.set_button(gtk::gdk::BUTTON_PRIMARY);
+        album_click.connect_released(clone!(
+            #[weak]
+            player,
+            #[weak]
+            window,
+            move |_, _, _, _| {
+                let Some(album) = player
+                    .current_song()
+                    .and_then(|song| song.get_album().cloned())
+                    .map(Album::from)
+                else {
+                    return;
+                };
+                window.goto_album(&album);
+            }
+        ));
+        album_label.add_controller(album_click);
+        album_label.add_css_class("clickable-label");
+        album_label.set_cursor_from_name(Some("pointer"));
+        album_label.set_tooltip_text(Some("View album"));
     }
 
     fn bind_state(&self, player: &Player, cache: Rc<Cache>, client_state: &ClientState) {

@@ -430,9 +430,17 @@ impl SongRow {
         self.imp().first_attrib_text.set_label(val.unwrap_or(""));
     }
 
+    pub fn first_attrib_label(&self) -> gtk::Label {
+        self.imp().first_attrib_text.get()
+    }
+
     pub fn set_second_attrib_text(&self, val: Option<&str>) {
         self.imp().second_attrib_text.set_visible(val.is_some());
         self.imp().second_attrib_text.set_label(val.unwrap_or(""));
+    }
+
+    pub fn second_attrib_label(&self) -> gtk::Label {
+        self.imp().second_attrib_text.get()
     }
 
     pub fn set_third_attrib_text(&self, val: Option<&str>) {

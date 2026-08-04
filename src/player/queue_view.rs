@@ -18,7 +18,7 @@ use std::{
 use super::PlayerPane;
 
 use crate::{
-    cache::Cache, client::{ClientState, Error as ClientError}, common::{ContentStack, RowEditButtons, Song, SongRow}, player::controller::SwapDirection, utils::{LazyInit, SearchableView, g_search_substr, settings_manager}, window::EuphonicaWindow,
+    cache::Cache, client::{ClientState, Error as ClientError}, common::{Album, Artist, ContentStack, RowEditButtons, Song, SongRow}, player::controller::SwapDirection, utils::{LazyInit, SearchableView, g_search_substr, settings_manager}, window::EuphonicaWindow,
 };
 
 use super::Player;
@@ -387,7 +387,12 @@ impl QueueView {
         Self::default()
     }
 
-    pub fn setup_listview(&self, player: &Player, cache: Rc<Cache>) {
+    pub fn setup_listview(
+        &self,
+        player: &Player,
+        cache: Rc<Cache>,
+        window: &EuphonicaWindow,
+    ) {
         // Enable/disable clear queue button depending on whether the queue is empty or not
         // Set selection mode
         // TODO: Allow click to jump to song
@@ -425,6 +430,8 @@ impl QueueView {
             player,
             #[weak]
             cache,
+            #[weak]
+            window,
             move |_, list_item| {
                 let item = list_item
                     .downcast_ref::<ListItem>()
@@ -432,6 +439,65 @@ impl QueueView {
                 let row = SongRow::new(Some(cache.clone()), Some(&player));
                 bind_row_by_expressions(&row, item);
                 row.add_css_class("shift-on-hover");
+
+                let artist_label = row.second_attrib_label();
+                let artist_click = gtk::GestureClick::new();
+                artist_click.set_button(gdk::BUTTON_PRIMARY);
+                artist_click.set_propagation_phase(gtk::PropagationPhase::Capture);
+                artist_click.connect_pressed(|gesture, _, _, _| {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
+                });
+                artist_click.connect_released(clone!(
+                    #[weak]
+                    item,
+                    #[weak]
+                    window,
+                    move |_, _, _, _| {
+                        let Some(artist) = item
+                            .item()
+                            .and_downcast::<Song>()
+                            .and_then(|song| song.get_artists().first().cloned())
+                            .map(Artist::from)
+                        else {
+                            return;
+                        };
+                        window.goto_artist(&artist);
+                    }
+                ));
+                artist_label.add_controller(artist_click);
+                artist_label.add_css_class("clickable-label");
+                artist_label.set_cursor_from_name(Some("pointer"));
+                artist_label.set_tooltip_text(Some("View artist"));
+
+                let album_label = row.first_attrib_label();
+                let album_click = gtk::GestureClick::new();
+                album_click.set_button(gdk::BUTTON_PRIMARY);
+                album_click.set_propagation_phase(gtk::PropagationPhase::Capture);
+                album_click.connect_pressed(|gesture, _, _, _| {
+                    gesture.set_state(gtk::EventSequenceState::Claimed);
+                });
+                album_click.connect_released(clone!(
+                    #[weak]
+                    item,
+                    #[weak]
+                    window,
+                    move |_, _, _, _| {
+                        let Some(album) = item
+                            .item()
+                            .and_downcast::<Song>()
+                            .and_then(|song| song.get_album().cloned())
+                            .map(Album::from)
+                        else {
+                            return;
+                        };
+                        window.goto_album(&album);
+                    }
+                ));
+                album_label.add_controller(album_click);
+                album_label.add_css_class("clickable-label");
+                album_label.set_cursor_from_name(Some("pointer"));
+                album_label.set_tooltip_text(Some("View album"));
+
                 let end_widget = RowEditButtons::new(
                     item,
                     // Raise action
@@ -953,8 +1019,10 @@ impl QueueView {
         window: &EuphonicaWindow,
     ) {
         self.imp().window.set(Some(window));
-        self.setup_listview(player, cache.clone());
-        self.imp().player_pane.setup(player, cache, client_state);
+        self.setup_listview(player, cache.clone(), window);
+        self.imp()
+            .player_pane
+            .setup(player, cache, client_state, window);
         self.bind_state(player);
         self.imp().player.set(Some(player));
     }
