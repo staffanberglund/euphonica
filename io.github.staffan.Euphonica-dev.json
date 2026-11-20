@@ -1,5 +1,5 @@
 {
-    "id" : "io.github.htkhiem.Euphonica",
+    "id" : "io.github.staffan.Euphonica",
     "runtime" : "org.gnome.Platform",
     "runtime-version" : "50",
     "sdk" : "org.gnome.Sdk",
@@ -11,6 +11,8 @@
     "finish-args" : [
         "--share=network",
         "--share=ipc",
+        "--own-name=io.github.staffan.Euphonica",
+        "--own-name=org.mpris.MediaPlayer2.Euphonica",
         "--socket=fallback-x11",
         "--device=dri",
         "--socket=wayland",

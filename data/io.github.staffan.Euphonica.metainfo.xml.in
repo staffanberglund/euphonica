@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.htkhiem.Euphonica</id>
+  <id>io.github.staffan.Euphonica</id>
 
   <name>Euphonica</name>
   <summary>MPD client with delusions of grandeur</summary>
-  <developer id="io.github.htkhiem">
+  <developer id="io.github.staffan">
     <name>Huynh Thien Khiem</name>
   </developer>
-  <url type="bugtracker">https://github.com/htkhiem/euphonica/issues</url>
-  <url type="homepage">https://github.com/htkhiem/euphonica</url>
-  <url type="vcs-browser">https://github.com/htkhiem/euphonica</url>  
+  <url type="bugtracker">https://github.com/staffan/euphonica/issues</url>
+  <url type="homepage">https://github.com/staffan/euphonica</url>
+  <url type="vcs-browser">https://github.com/staffan/euphonica</url>  
   <content_rating type="oars-1.1" />
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
@@ -50,7 +50,7 @@
     <keyword translate="no">MPD</keyword>
   </keywords>
 
-  <launchable type="desktop-id">io.github.htkhiem.Euphonica.desktop</launchable>
+  <launchable type="desktop-id">io.github.staffan.Euphonica.desktop</launchable>
   <screenshots>
     <screenshot type="default">
       <image>https://i.ibb.co/Csv0cYvg/album-view.png</image>
@@ -80,7 +80,7 @@
 
   <releases>
     <release version="0.99.5-beta" date="2026-05-23">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.99.4-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.99.4-beta</url>
       <description>
         <p>Change: Much faster album/artist grid population over remote connections (~20x).</p>
         <p>Change: Multithreaded album art decoding and resizing (configurable thread count).</p>
@@ -90,7 +90,7 @@
       </description>
     </release>
     <release version="0.99.4-beta" date="2026-05-23">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.99.4-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.99.4-beta</url>
       <description>
         <p>New: ncmpcpp-inspired keyboard shortcuts and new searchable Shortcuts dialog.</p>
         <p>New: More cache controls: image format, size and graceful clear-cache option.</p>
@@ -103,7 +103,7 @@
       </description>
     </release>
     <release version="0.99.3-beta" date="2026-05-02">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.99.3-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.99.3-beta</url>
       <description>
         <p>New: Drag-and-drop to reorder tracks in Queue View and Playlist Editor.</p>
         <p>New: Volume knob now supports angular dragging for touchscreen use.</p>
@@ -123,7 +123,7 @@
       </description>
     </release>
     <release version="0.99.2-beta" date="2026-03-28">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.99.2-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.99.2-beta</url>
       <description>
         <p>Fix: Queue View sometimes not refreshing.</p>
         <p>Fix: Album ratings not being retrieved.</p>
@@ -132,7 +132,7 @@
       </description>
     </release>
     <release version="0.99.1-beta" date="2026-03-21">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.99.1-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.99.1-beta</url>
       <description>
         <p>Fix: Refresh (F5) not working.</p>
         <p>Fix: Reconnecting to a different server while already connected to one doesn't proceed.</p>
@@ -141,7 +141,7 @@
       </description>
     </release>
     <release version="0.99.0-beta" date="2026-03-15">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.99.0-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.99.0-beta</url>
       <description>
         <p>Near-complete rearchitecturing and rewrite to async Rust! The execution flow is now far simpler than the prior explicit message-passing design.</p>
         <p>New: Automatic retry upon failure for all metadata providers to increase reliability over spotty internet connections.</p>
@@ -158,7 +158,7 @@
       </description>
     </release>
     <release version="0.98.1-beta" date="2026-01-17">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.98.1-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.98.1-beta</url>
       <description>
         <p>Fix: re-added sort by rating and fixed other sort options in Album View.</p>
         <p>Fix: volume level is now restored upon unmuting.</p>
@@ -167,7 +167,7 @@
       </description>
     </release>
     <release version="0.98.0-beta" date="2025-11-30">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.98.0-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.98.0-beta</url>
       <description>
         <p>New: dynamic, rule-based playlists (at last!). Currently supporting filtering and sorting by song/album ratings, play count, skip count, URI components, tags and the like. Query results can be auto-refreshed. Everything happens client-side so you need not run anything extra on the server. Comes with a GUI editor with live error checking.</p>
         <p>New: song ratings &amp; other myMPD-compatible sticker features.</p>
@@ -179,7 +179,7 @@
       </description>
     </release>
     <release version="0.97.2-beta" date="2025-09-26">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.97.2-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.97.2-beta</url>
       <description>
         <p>New: in-app theme selector (follow system style, force light, force dark).</p>
         <p>Refactor: queuing is now done in the background to avoid freezing UI when adding lots of tracks.</p>
@@ -190,7 +190,7 @@
       </description>
     </release>
     <release version="0.97.1-beta" date="2025-09-14">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.97.1-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.97.1-beta</url>
       <description>
         <p>New: Option to re-fetch metadata. Will also re-attempt artist avatar fetching.</p>
         <p>Refactor: Basic album/artist info is now shown early instead of being hidden until external wiki loads.</p>
@@ -201,7 +201,7 @@
       </description>
     </release>
     <release version="0.97.0-beta" date="2025-09-07">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.97.0-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.97.0-beta</url>
       <description>
         <p>New: Global background task counter and spinner.</p>
         <p>Refactor: Lazy init for all views, should markedly improve startup smoothness.</p>
@@ -212,7 +212,7 @@
       </description>
     </release>
     <release version="0.96.4-beta" date="2025-09-02">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.96.4-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.96.4-beta</url>
       <description>
         <p>New: Clicking on a (synced) lyric line will seek to its timestamp.</p>
         <p>Refactor: Many performance improvements to queue operations.</p>
@@ -224,7 +224,7 @@
       </description>
     </release>
     <release version="0.96.3-beta" date="2025-08-23">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.96.3-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.96.3-beta</url>
       <description>
         <p>New: Lyrics import, export and clear features.</p>
         <p>New: PipeWire visualiser backend can now select specific devices to capture audio from.</p>
@@ -234,7 +234,7 @@
       </description>
     </release>
     <release version="0.96.2-beta" date="2025-08-03">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.96.2-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.96.2-beta</url>
       <description>
         <p>Fix: Hangups and performance issues on larger libraries.</p>
         <p>Fix: Crash trying to queue inaccessible song files (will show a toast instead).</p>
@@ -242,7 +242,7 @@
       </description>
     </release>
     <release version="0.96.0-beta" date="2025-07-26">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.96.0-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.96.0-beta</url>
       <description>
         <p>New: Recent View. Shows recently-played albums, artists and songs. History can be paused and cleared.</p>
         <p>New: Animated marquees for long album titles in grid views. Exact behaviour is customisable (wrap/ellipsise/marquee-scroll on hover).</p>
@@ -255,20 +255,20 @@
       </description>
     </release>
     <release version="0.95.2-beta" date="2025-07-14">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.95.2-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.95.2-beta</url>
       <description>
         <p>Fix: crash on systems without XDG Background support.</p>
       </description>
     </release>
     <release version="0.95.1-beta" date="2025-07-12">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.95.1-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.95.1-beta</url>
       <description>
         <p>Fix: crash on duplicate metadata tags.</p>
         <p>Fix: crash after exiting artist content page.</p>
       </description>
     </release>
     <release version="0.95.0-beta" date="2025-07-09">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.95.0-beta</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.95.0-beta</url>
       <description>
         <p>New: Embedded track arts are now globally supported as fallback in case no cover image file is present in the folder. This also allows tracks in certain albums to have their unique album arts shown.</p>
         <p>New: Double-clicking on a song in an album content page will now replace the current queue with it.</p>
@@ -279,13 +279,13 @@
       </description>
     </release>
     <release version="0.94.1-alpha" date="2025-06-28">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.94.1-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.94.1-alpha</url>
       <description>
         <p>Fix: metadata cache thread panicking on invalid album tag information.</p>
       </description>
     </release>
     <release version="0.94.0-alpha" date="2025-06-28">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.94.0-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.94.0-alpha</url>
       <description>
         <p>New: Local socket connection support. This also opens up MPD capabilities only available via local sockets, such as configuration editing.</p>
         <p>Refactor: Folder view state is now preserved across window launches (when background running is enabled)</p>
@@ -296,20 +296,20 @@
       </description>
     </release>
     <release version="0.93.1-alpha" date="2025-06-22">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.93.1-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.93.1-alpha</url>
       <description>
         <p>Fix: MPRIS duration using the wrong unit, causing seekbars in shell applets to malfunction.</p>
       </description>
     </release>
     <release version="0.93.0-alpha" date="2025-06-21">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.93.0-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.93.0-alpha</url>
       <description>
         <p>New: Synced lyrics! Currently fetching from LRCLIB and enabled by default. Plain lyrics will be fetched if no synced version is available. If multiple lyrics entries are available for a song, the one whose stated duration is closest to your local file will be used. You may also turn lyrics fetching off in the Integrations menu as usual.</p>
         <p>Fix: Sidebar not updating itself to highlighting Queue View when the "jump to pane" button (only visible in mini-bar mode) is clicked.</p>
       </description>
     </release>
     <release version="0.92.0-alpha" date="2025-06-14">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.92.0-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.92.0-alpha</url>
       <description>
         <p>New: Background mode. Euphonica can now run in the background, allowing it to serve as your MPRIS daemon. Visualisation backends and album art blur thread will be shut down upon entering background mode, reducing CPU usage to pretty much zero. Polling will still be performed to support shell applets with seekbars (GNOME does with an extension).</p>
         <p>New: Command-line argument to start Euphonica minimised (--minimized). This allows setting up autostart scripts.</p>
@@ -318,20 +318,20 @@
       </description>
     </release>
     <release version="0.91.0-alpha" date="2025-05-24">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.91.0-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.91.0-alpha</url>
       <description>
         <p>New: Cache size report and open button in Library preferences tab.</p>
         <p>Fix: Bottom bar playback control buttons not centering themselves vertically when seekbar is hidden.</p>
       </description>
     </release>
     <release version="0.90.4-alpha" date="2025-05-18">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.90.4-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.90.4-alpha</url>
       <description>
         <p>Fix: child client getting clogged on cold-starts by one-time tasks such as album art downloading.</p>
       </description>
     </release>
     <release version="0.90.3-alpha" date="2025-05-17">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.90.3-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.90.3-alpha</url>
       <description>
         <p>From this version onwards we are targeting a v1.0 release, hence the version bump.</p>
         <p>This version introduces support for matching app accent colour to currently-playing song's album art, and a big revamp of the offline cache mechanism.</p>
@@ -348,7 +348,7 @@
       </description>
     </release>
     <release version="0.12.0-alpha" date="2025-02-16">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.12.0-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.12.0-alpha</url>
       <description>
         <p>PipeWire visualiser backend, fully adaptive UI and initial Flatpak release.</p>
         <ul>
@@ -362,7 +362,7 @@
       </description>
     </release>
     <release version="0.11.0-alpha" date="2025-02-02">
-      <url type="details">https://github.com/htkhiem/euphonica/releases/tag/v0.11.0-alpha</url>
+      <url type="details">https://github.com/staffan/euphonica/releases/tag/v0.11.0-alpha</url>
       <description>
         <p>First public tagged release for Euphonica.</p>
         <ul>

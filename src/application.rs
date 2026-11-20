@@ -19,10 +19,10 @@
  */
 
 use crate::{
+    config::{APPLICATION_ID, VERSION},
     EuphonicaWindow,
     cache::Cache,
     client::{MpdWrapper, Result as ClientResult},
-    config::VERSION,
     library::Library,
     player::{Player, get_next_replaygain},
     preferences::Preferences,
@@ -701,7 +701,7 @@ impl EuphonicaApplication {
         let window = self.active_window().unwrap();
         let about = adw::AboutDialog::builder()
             .application_name("Euphonica")
-            .application_icon("io.github.htkhiem.Euphonica")
+            .application_icon(APPLICATION_ID)
             .developer_name("htkhiem2000")
             .version(VERSION)
             .developers(vec!["htkhiem2000", "ShadiestGoat", "sonicv6"])

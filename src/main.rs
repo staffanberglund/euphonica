@@ -34,7 +34,7 @@ mod window;
 use self::application::EuphonicaApplication;
 use self::window::EuphonicaWindow;
 
-use config::{GETTEXT_PACKAGE, LOCALEDIR, PKGDATADIR};
+use config::{APPLICATION_ID, GETTEXT_PACKAGE, LOCALEDIR, PKGDATADIR};
 use gdk::Display;
 use gettextrs::{bind_textdomain_codeset, bindtextdomain, textdomain};
 use gtk::prelude::*;
@@ -69,7 +69,7 @@ fn main() -> glib::ExitCode {
     // application windows, integration with the window manager/compositor, and
     // desktop features such as file opening and single-instance applications.
     let app = EuphonicaApplication::new(
-        "io.github.htkhiem.Euphonica",
+        APPLICATION_ID.trim_end_matches(".Devel"),
         &gio::ApplicationFlags::empty(),
     );
     app.connect_startup(|_| load_css());

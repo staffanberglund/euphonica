@@ -1,4 +1,4 @@
-data/io.github.htkhiem.Euphonica.desktop.in
-data/io.github.htkhiem.Euphonica.metainfo.xml.in
-data/io.github.htkhiem.Euphonica.gschema.xml
+data/io.github.staffan.Euphonica.desktop.in
+data/io.github.staffan.Euphonica.metainfo.xml.in
+data/io.github.staffan.Euphonica.gschema.xml
 src/window.ui

@@ -654,7 +654,7 @@ impl Player {
         self.imp()
             .mpris_server
             .get_or_try_init(|| async {
-                let server = LocalServer::new("io.github.htkhiem.Euphonica", self.clone()).await?;
+                let server = LocalServer::new(APPLICATION_ID.trim_end_matches(".Devel"), self.clone()).await?;
                 glib::spawn_future_local(server.run());
                 Ok(server)
             })

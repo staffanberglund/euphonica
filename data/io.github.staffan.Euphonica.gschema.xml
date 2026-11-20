@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="euphonica">
-	<enum id="io.github.htkhiem.Euphonica.sortby">
+	<enum id="io.github.staffan.Euphonica.sortby">
 		<value nick="song-title" value="1"/>
 		<value nick="artist" value="2"/>
 		<value nick="album-title" value="3"/>
@@ -11,28 +11,28 @@
 		<value nick="rating" value="8"/>
 	</enum>
 
-	<enum id="io.github.htkhiem.Euphonica.sortdir">
+	<enum id="io.github.staffan.Euphonica.sortdir">
 		<value nick="asc" value="1"/>
 		<value nick="desc" value="0"/>  <!-- Works as boolean too -->
 	</enum>
 
-	<enum id="io.github.htkhiem.Euphonica.pcmsource">
+	<enum id="io.github.staffan.Euphonica.pcmsource">
 		<value nick="pipewire" value="1"/>
 		<value nick="fifo" value="0"/>
 	</enum>
 
-	<enum id="io.github.htkhiem.Euphonica.volumeunit">
+	<enum id="io.github.staffan.Euphonica.volumeunit">
 		<value nick="percents" value="0"/>
 		<value nick="decibels" value="1"/>  <!-- Works as boolean too -->
 	</enum>
 
-	<enum id="io.github.htkhiem.Euphonica.titlewrapmode">
+	<enum id="io.github.staffan.Euphonica.titlewrapmode">
 		<value nick="ellipsis" value="0"/>
 		<value nick="scroll" value="1"/>
 		<value nick="wrap" value="2"/>
 	</enum>
 
-	<enum id="io.github.htkhiem.Euphonica.onexitaction">
+	<enum id="io.github.staffan.Euphonica.onexitaction">
 		<value nick="nothing" value="0"/>
 		<value nick="pause" value="1"/>
 		<value nick="stop" value="2"/>
@@ -40,27 +40,27 @@
 	</enum>
 
 	<!-- Unused, but kept for compatibility -->
-	<enum id="io.github.htkhiem.Euphonica.imageformat">
+	<enum id="io.github.staffan.Euphonica.imageformat">
 		<value nick="jpeg" value="0"/>
 		<value nick="png" value="1"/>
 	</enum>
 
 	
 
-	<schema id="io.github.htkhiem.Euphonica" path="/io/github/htkhiem/Euphonica/">
-		<child schema="io.github.htkhiem.Euphonica.ui" name="ui"/>
-		<child schema="io.github.htkhiem.Euphonica.state" name="state"/>
-		<child schema="io.github.htkhiem.Euphonica.library" name="library"/>
-		<child schema="io.github.htkhiem.Euphonica.metaprovider" name="metaprovider"/>
-		<child schema="io.github.htkhiem.Euphonica.player" name="player"/>
-		<child schema="io.github.htkhiem.Euphonica.client" name="client"/>
+	<schema id="io.github.staffan.Euphonica" path="/io/github/staffan/Euphonica/">
+		<child schema="io.github.staffan.Euphonica.ui" name="ui"/>
+		<child schema="io.github.staffan.Euphonica.state" name="state"/>
+		<child schema="io.github.staffan.Euphonica.library" name="library"/>
+		<child schema="io.github.staffan.Euphonica.metaprovider" name="metaprovider"/>
+		<child schema="io.github.staffan.Euphonica.player" name="player"/>
+		<child schema="io.github.staffan.Euphonica.client" name="client"/>
 
 		<key name="background-portal-available" type="b">
 			<default>true</default>
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.client" path="/io/github/htkhiem/Euphonica/client/">
+	<schema id="io.github.staffan.Euphonica.client" path="/io/github/staffan/Euphonica/client/">
 		<key name="mpd-auto-reconnect" type="b">
 			<default>true</default>
 		</key>
@@ -91,7 +91,7 @@
 			<default>true</default>
 		</key>
 
-		<key name="mpd-visualizer-pcm-source" enum='io.github.htkhiem.Euphonica.pcmsource'>
+		<key name="mpd-visualizer-pcm-source" enum='io.github.staffan.Euphonica.pcmsource'>
 			<default>'pipewire'</default>
 		</key>
 
@@ -113,7 +113,7 @@
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.library" path="/io/github/htkhiem/Euphonica/library/">
+	<schema id="io.github.staffan.Euphonica.library" path="/io/github/staffan/Euphonica/library/">
 		<key name="artist-tag-delims" type="as">
 			<default>[",", ";", ":", "&amp;", "/", "//", "\\", "\\\\", " X ", "feat.", " ft.", "(ft.", ",ft.", "duet with", "special guest"]</default>
 		</key>
@@ -175,7 +175,7 @@
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.metaprovider" path="/io/github/htkhiem/Euphonica/metaprovider/">
+	<schema id="io.github.staffan.Euphonica.metaprovider" path="/io/github/staffan/Euphonica/metaprovider/">
 		<key name="delay-between-requests-s" type="d">
 			<default>1.5</default>
 			<summary>How long to wait between metadata provider API calls</summary>
@@ -206,12 +206,12 @@
 			</description>
 		</key>
 
-		<child schema="io.github.htkhiem.Euphonica.metaprovider.lastfm" name="lastfm"/>
-		<child schema="io.github.htkhiem.Euphonica.metaprovider.musicbrainz" name="musicbrainz"/>
-		<child schema="io.github.htkhiem.Euphonica.metaprovider.lrclib" name="lrclib"/>
+		<child schema="io.github.staffan.Euphonica.metaprovider.lastfm" name="lastfm"/>
+		<child schema="io.github.staffan.Euphonica.metaprovider.musicbrainz" name="musicbrainz"/>
+		<child schema="io.github.staffan.Euphonica.metaprovider.lrclib" name="lrclib"/>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.metaprovider.lastfm" path="/io/github/htkhiem/Euphonica/metaprovider/lastfm/">
+	<schema id="io.github.staffan.Euphonica.metaprovider.lastfm" path="/io/github/staffan/Euphonica/metaprovider/lastfm/">
 		<key name="name" type="s">
 			<default>'Last.fm'</default>
 		</key>
@@ -226,7 +226,7 @@
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.metaprovider.lrclib" path="/io/github/htkhiem/Euphonica/metaprovider/lrclib/">
+	<schema id="io.github.staffan.Euphonica.metaprovider.lrclib" path="/io/github/staffan/Euphonica/metaprovider/lrclib/">
 		<key name="name" type="s">
 			<default>'LRCLIB'</default>
 		</key>
@@ -235,7 +235,7 @@
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.metaprovider.musicbrainz" path="/io/github/htkhiem/Euphonica/metaprovider/musicbrainz/">
+	<schema id="io.github.staffan.Euphonica.metaprovider.musicbrainz" path="/io/github/staffan/Euphonica/metaprovider/musicbrainz/">
 		<key name="name" type="s">
 			<default>'MusicBrainz'</default>
 		</key>
@@ -250,7 +250,7 @@
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.player" path="/io/github/htkhiem/Euphonica/player/">
+	<schema id="io.github.staffan.Euphonica.player" path="/io/github/staffan/Euphonica/player/">
 		<key name="enable-mpris" type="b">
 			<default>true</default>
 		</key>
@@ -283,7 +283,7 @@
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.ui" path="/io/github/htkhiem/Euphonica/ui/">
+	<schema id="io.github.staffan.Euphonica.ui" path="/io/github/staffan/Euphonica/ui/">
 		<key name="colorscheme" type="s">
 			<default>'follow'</default>
 		</key>
@@ -308,7 +308,7 @@
 		<key name="vol-knob-sensitivity" type="d">
 			<default>1.0</default>
 		</key>
-		<key name="vol-knob-unit" enum='io.github.htkhiem.Euphonica.volumeunit'>
+		<key name="vol-knob-unit" enum='io.github.staffan.Euphonica.volumeunit'>
 			<default>'percents'</default>
 		</key>
 		<key name="use-visualizer" type="b">
@@ -342,7 +342,7 @@
 		<key name="auto-accent" type='b'>
 			<default>true</default>
 		</key>
-		<key name="title-wrap-mode" enum='io.github.htkhiem.Euphonica.titlewrapmode'>
+		<key name="title-wrap-mode" enum='io.github.staffan.Euphonica.titlewrapmode'>
 			<default>'ellipsis'</default>
 		</key>
 		<key name="max-columns" type="u">
@@ -370,13 +370,13 @@
         </key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.state" path="/io/github/htkhiem/Euphonica/state/">
-		<child schema="io.github.htkhiem.Euphonica.state.albumview" name="albumview"/>
-		<child schema="io.github.htkhiem.Euphonica.state.artistview" name="artistview"/>
-		<child schema="io.github.htkhiem.Euphonica.state.folderview" name="folderview"/>
-		<child schema="io.github.htkhiem.Euphonica.state.playlistview" name="playlistview"/>
-		<child schema="io.github.htkhiem.Euphonica.state.dynplaylistview" name="dynplaylistview"/>
-		<child schema="io.github.htkhiem.Euphonica.state.queueview" name="queueview"/>
+	<schema id="io.github.staffan.Euphonica.state" path="/io/github/staffan/Euphonica/state/">
+		<child schema="io.github.staffan.Euphonica.state.albumview" name="albumview"/>
+		<child schema="io.github.staffan.Euphonica.state.artistview" name="artistview"/>
+		<child schema="io.github.staffan.Euphonica.state.folderview" name="folderview"/>
+		<child schema="io.github.staffan.Euphonica.state.playlistview" name="playlistview"/>
+		<child schema="io.github.staffan.Euphonica.state.dynplaylistview" name="dynplaylistview"/>
+		<child schema="io.github.staffan.Euphonica.state.queueview" name="queueview"/>
 
 		<!-- Remember last window size -->
 		<key name="last-window-width" type="i">
@@ -396,28 +396,28 @@
 		<key name="start-minimized" type="b">
 			<default>true</default>
 		</key>
-		<key name="on-exit-action" enum='io.github.htkhiem.Euphonica.onexitaction'>
+		<key name="on-exit-action" enum='io.github.staffan.Euphonica.onexitaction'>
 			<default>'nothing'</default>
 			<summary>Action to perform on MPD when Euphonica exits</summary>
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.state.albumview" path="/io/github/htkhiem/Euphonica/state/albumview/">
+	<schema id="io.github.staffan.Euphonica.state.albumview" path="/io/github/staffan/Euphonica/state/albumview/">
 		<!-- Album view state -->
-		<key name='sort-by' enum='io.github.htkhiem.Euphonica.sortby'>
+		<key name='sort-by' enum='io.github.staffan.Euphonica.sortby'>
 			<default>'album-title'</default>
 			<summary>Album View sort criterion</summary>
 		</key>
 
-		<key name="sort-direction" enum='io.github.htkhiem.Euphonica.sortdir'>
+		<key name="sort-direction" enum='io.github.staffan.Euphonica.sortdir'>
 			<default>'asc'</default>
 			<summary>Album View sort direction</summary>
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.state.artistview" path="/io/github/htkhiem/Euphonica/state/artistview/">
+	<schema id="io.github.staffan.Euphonica.state.artistview" path="/io/github/staffan/Euphonica/state/artistview/">
 		<!-- Artist view state -->
-		<key name="sort-direction" enum='io.github.htkhiem.Euphonica.sortdir'>
+		<key name="sort-direction" enum='io.github.staffan.Euphonica.sortdir'>
 			<default>'asc'</default>
 			<summary>Artist View sort direction</summary>
         </key>
@@ -428,46 +428,46 @@
         </key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.state.folderview" path="/io/github/htkhiem/Euphonica/state/folderview/">
+	<schema id="io.github.staffan.Euphonica.state.folderview" path="/io/github/staffan/Euphonica/state/folderview/">
 		<!-- Folder view state -->
-		<key name='sort-by' enum='io.github.htkhiem.Euphonica.sortby'>
+		<key name='sort-by' enum='io.github.staffan.Euphonica.sortby'>
 			<default>'filename'</default>
 			<summary>Folder View sort criterion</summary>
 		</key>
 
-		<key name="sort-direction" enum='io.github.htkhiem.Euphonica.sortdir'>
+		<key name="sort-direction" enum='io.github.staffan.Euphonica.sortdir'>
 			<default>'asc'</default>
 			<summary>Folder View sort direction</summary>
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.state.playlistview" path="/io/github/htkhiem/Euphonica/state/playlistview/">
+	<schema id="io.github.staffan.Euphonica.state.playlistview" path="/io/github/staffan/Euphonica/state/playlistview/">
 		<!-- Folder view state -->
-		<key name='sort-by' enum='io.github.htkhiem.Euphonica.sortby'>
+		<key name='sort-by' enum='io.github.staffan.Euphonica.sortby'>
 			<default>'filename'</default>
 			<summary>Playlist View sort criterion</summary>
 		</key>
 
-		<key name="sort-direction" enum='io.github.htkhiem.Euphonica.sortdir'>
+		<key name="sort-direction" enum='io.github.staffan.Euphonica.sortdir'>
 			<default>'asc'</default>
 			<summary>Playlist View sort direction</summary>
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.state.dynplaylistview" path="/io/github/htkhiem/Euphonica/state/dynplaylistview/">
+	<schema id="io.github.staffan.Euphonica.state.dynplaylistview" path="/io/github/staffan/Euphonica/state/dynplaylistview/">
 		<!-- Folder view state -->
-		<key name='sort-by' enum='io.github.htkhiem.Euphonica.sortby'>
+		<key name='sort-by' enum='io.github.staffan.Euphonica.sortby'>
 			<default>'filename'</default>
 			<summary>Dynamic Playlist View sort criterion</summary>
 		</key>
 
-		<key name="sort-direction" enum='io.github.htkhiem.Euphonica.sortdir'>
+		<key name="sort-direction" enum='io.github.staffan.Euphonica.sortdir'>
 			<default>'asc'</default>
 			<summary>Dynamic Playlist View sort direction</summary>
 		</key>
 	</schema>
 
-	<schema id="io.github.htkhiem.Euphonica.state.queueview" path="/io/github/htkhiem/Euphonica/state/queueview/">
+	<schema id="io.github.staffan.Euphonica.state.queueview" path="/io/github/staffan/Euphonica/state/queueview/">
 		<!-- Queue view & player pane state -->
 		<key name='show-lyrics' type='b'>
 			<default>true</default>
@@ -481,7 +481,7 @@
 			<default>false</default>
 		</key>
 
-		<key name="sort-direction" enum='io.github.htkhiem.Euphonica.sortdir'>
+		<key name="sort-direction" enum='io.github.staffan.Euphonica.sortdir'>
 			<default>'asc'</default>
 			<summary>Album View sort direction</summary>
 		</key>

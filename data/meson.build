@@ -1,6 +1,6 @@
 desktop_file = i18n.merge_file(
-        input: 'io.github.htkhiem.Euphonica.desktop.in',
-       output: 'io.github.htkhiem.Euphonica.desktop',
+        input: 'io.github.staffan.Euphonica.desktop.in',
+       output: 'io.github.staffan.Euphonica.desktop',
          type: 'desktop',
        po_dir: '../po',
       install: true,
@@ -13,8 +13,8 @@ if desktop_utils.found()
 endif
 
 appstream_file = i18n.merge_file(
-        input: 'io.github.htkhiem.Euphonica.metainfo.xml.in',
-       output: 'io.github.htkhiem.Euphonica.metainfo.xml',
+        input: 'io.github.staffan.Euphonica.metainfo.xml.in',
+       output: 'io.github.staffan.Euphonica.metainfo.xml',
        po_dir: '../po',
       install: true,
   install_dir: get_option('datadir') / 'metainfo'
@@ -24,7 +24,7 @@ appstreamcli = find_program('appstreamcli', required: false, disabler: true)
 test('Validate appstream file', appstreamcli,
      args: ['validate', '--no-net', '--explain', appstream_file])
 
-install_data('io.github.htkhiem.Euphonica.gschema.xml',
+install_data('io.github.staffan.Euphonica.gschema.xml',
   install_dir: get_option('datadir') / 'glib-2.0' / 'schemas'
 )
 

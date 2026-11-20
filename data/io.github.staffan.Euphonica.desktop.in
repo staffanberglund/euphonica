@@ -7,6 +7,6 @@ Comment=GTK4 libadwaita MPD client
 Categories=AudioVideo;Player;
 Keywords=Music;Player;MPD
 
-Icon=io.github.htkhiem.Euphonica
+Icon=io.github.staffan.Euphonica
 Exec=euphonica
 Terminal=false
